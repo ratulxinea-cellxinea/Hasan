@@ -4,9 +4,14 @@ const mahmud = [
 "baby","bby","babu","bbu","jan","bot","জান","জানু","বেবি","wifey","hinata"
 ];
 
+// 🔥 SAFE BASE URL
 const baseApiUrl = async () => {
+try{
 const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/HINATA/main/baseApiUrl.json");
 return base.data.mahmud;
+}catch(e){
+return "https://hinataai.up.railway.app"; // fallback API
+}
 };
 
 module.exports = {
@@ -14,7 +19,7 @@ module.exports = {
 config:{
 name:"hinata",
 aliases:["baby","bby","bbu","jan","janu","wifey","bot"],
-version:"2.0",
+version:"2.1",
 author:"MahMUD",
 countDown:2,
 role:0,
@@ -22,7 +27,7 @@ description:"Hinata AI",
 category:"chat"
 },
 
-//================== MAIN COMMAND ==================//
+// ================= MAIN =================
 
 onStart: async function ({ api,event,args }) {
 
@@ -30,7 +35,8 @@ try{
 
 const baseUrl = await baseApiUrl();
 
-if(args[0] == "teach"){
+// ===== TEACH =====
+if(args[0] && args[0].toLowerCase() === "teach"){
 
 const input = args.slice(1).join(" ");
 const [trigger,...resArr] = input.split(" - ");
@@ -48,53 +54,35 @@ userID:event.senderID
 return api.sendMessage(`✅ Teach Saved\n${trigger} ➜ ${responses}`,event.threadID,event.messageID);
 }
 
-//====== NORMAL CHAT ======//
+// ===== NORMAL CHAT =====
+if(!args[0]) return;
 
 const res = await axios.post(`${baseUrl}/api/hinata`,{
 text:args.join(" "),
-style:3,
-attachments:event.attachments || []
+style:3
 });
 
 return api.sendMessage(res.data.message,event.threadID,event.messageID);
 
 }catch(e){
-return api.sendMessage("API Error",event.threadID,event.messageID);
+return api.sendMessage("⚠ API Error: "+e.message,event.threadID,event.messageID);
 }
 
 },
 
-//================== REPLY ==================//
+// ================= AUTO =================
 
-onReply: async function ({ api,event,commandName }) {
-
-try{
-
-const baseUrl = await baseApiUrl();
-
-const res = await axios.post(`${baseUrl}/api/hinata`,{
-text:event.body || "hi",
-style:3
-});
-
-return api.sendMessage(res.data.message,event.threadID,(err,info)=>{
-if(!err)global.GoatBot.onReply.set(info.messageID,{commandName,author:event.senderID});
-},event.messageID);
-
-}catch(e){}
-
-},
-
-//================== AUTO CHAT ==================//
-
-onChat: async function ({ api,event,commandName }) {
+onChat: async function ({ api,event }) {
 
 const message = event.body?.toLowerCase() || "";
 
 if(
 event.type !== "message_reply" &&
 mahmud.some(w=>message.startsWith(w)) &&
-!message.includes("teach")
+!message.startsWith("baby teach") &&
+!message.startsWith("bby teach") &&
+!message.startsWith("jan teach") &&
+!message.startsWith("hinata teach")
 ){
 
 const reacts = [
@@ -128,11 +116,11 @@ text:userText,
 style:3
 });
 
-return api.sendMessage(res.data.message,event.threadID,(err,info)=>{
-if(!err)global.GoatBot.onReply.set(info.messageID,{commandName,author:event.senderID});
-},event.messageID);
+return api.sendMessage(res.data.message,event.threadID,event.messageID);
 
-}catch(e){}
+}catch(e){
+return api.sendMessage("⚠ Chat API Down",event.threadID,event.messageID);
+}
 
 }
 
