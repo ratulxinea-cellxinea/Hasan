@@ -5,12 +5,12 @@ module.exports = {
   config: {
     name: "cp",
     aliases: [],
-    version: "1.0",
+    version: "2.1",
     author: "Hasan",
     countDown: 5,
     role: 0,
-    shortDescription: "Bangla Caption",
-    longDescription: "Get random caption from banglacaptionstatus.com",
+    shortDescription: "Stylish Bangla Caption",
+    longDescription: "Get random stylish caption from banglacaptionstatus.com",
     category: "fun"
   },
 
@@ -37,26 +37,41 @@ module.exports = {
       });
 
       if (!captions.length) {
-        return message.reply("❌ Caption পাওয়া যায়নি!");
+        return message.reply("🌸 Caption পাওয়া যায়নি! আবার চেষ্টা করো 🕊️");
       }
 
       const randomCaption =
         captions[Math.floor(Math.random() * captions.length)];
 
+      // 🌸 Full Flower & Peace Emoji List (50+)
+      const emojis = [
+        "🌸","🌺","🌷","🌹","🥀","🌻","🌼","💐","🪷","🌿",
+        "🍃","🌾","🌱","🌲","🌳","🕊️","✌️","☮️","🪶","✨",
+        "💮","🏵️","🪻","🌵","🌴","🌙","🌤️","🌈","🌊","🧘‍♂️",
+        "🧘‍♀️","💗","🤍","💞","💓","💝","🕯️","🪔","🫶","🤲",
+        "🌅","🌄","🍀","🌟","🌌","🌬️","🕊","☀️","🌺","🌸",
+        "🌷","🌹","💮","🏵️","🪷","🌻","🍃","🌿","🌼","☮️"
+      ];
+
+      const randomEmojis = emojis
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 12)
+        .join(" ");
+
       return message.reply(
-        `╔══════════════╗
-   ✨ 𝑩𝒂𝒏𝒈𝒍𝒂 𝑪𝒂𝒑𝒕𝒊𝒐𝒏 ✨
-╚══════════════╝
+`╭━❀ 𝐁𝐚𝐧𝐠𝐥𝐚 𝐂𝐚𝐩𝐭𝐢𝐨𝐧 ❀━╮
+│
+│  ${randomCaption}
+│
+╰━❀━━━━━━━━━━━━━━❀━╯
+   ${randomEmojis}
 
-${randomCaption}
-
-━━━━━━━━━━━━━━
-Type /cp again 😌`
+      ❀ 𝑴𝒆𝒉𝒆𝒅𝒊 𝑯𝒂𝒔𝒂𝒏 ❀`
       );
 
     } catch (err) {
       console.error(err);
-      return message.reply("⚠️ Website থেকে caption আনতে সমস্যা হচ্ছে!");
+      return message.reply("🕊️ Website থেকে caption আনতে সমস্যা হচ্ছে! পরে আবার চেষ্টা করো 🌸");
     }
   }
 };
