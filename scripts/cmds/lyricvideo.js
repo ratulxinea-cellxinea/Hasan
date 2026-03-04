@@ -1,12 +1,12 @@
 const axios = require("axios");
-const { getStreamFromURL, shortenURL, randomString } = global.utils;
+const { getStreamFromURL, shortenURL } = global.utils;
 
 async function fetchTikTokVideos(query) {
   try {
-    const response = await axios.get(`https://lyric-search-neon.vercel.app/kshitiz?keyword=${query}`);
+    const response = await axios.get(`https://lyric-search-neon.vercel.app/kshitiz?keyword=${encodeURIComponent(query)}`);
     return response.data;
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return null;
   }
 }
@@ -15,76 +15,129 @@ module.exports = {
   config: {
     name: "lyricvideo",
     aliases: ["lv"],
-    author: "Vex_kshitiz",
-    version: "1.0",
+    author: "Nazim Fixed",
+    version: "2.1",
     shortDescription: {
-      en: "Play a lyric video",
+      en: "Play Lyric Video (Short + Long)"
     },
     longDescription: {
-      en: "Search for a lyrical video based on the provided query",
+      en: "Search & Send Beautiful Lyric Video"
     },
     category: "fun",
     guide: {
-      en: "{p}{n} [query]",
-    },
+      en: "{p}{n} [song name] or reply to audio/video"
+    }
   },
-  onStart: async function ({ api, event, args, message }) {
-    api.setMessageReaction("✨", event.messageID, (err) => {}, true);
+
+  onStart: async function ({ api, event, args }) {
+
+    const emojiReact = [
+      "🎧","🎶","🎵","✨","💫","🔥",
+      "📀","🎤","🖤","🌈","⚡","💥",
+      "📹","🎬","🫶","🥀","🎼","🎹",
+      "🎻","🎷","🪩","🌟","🔊","🎚️",
+      "🎛️","📻","🎙️","💿","🌀","🌌",
+      "🕊️","💎","🌠","🎇","🎆","🧿"
+    ];
+
+    api.setMessageReaction(
+      emojiReact[Math.floor(Math.random() * emojiReact.length)],
+      event.messageID,
+      () => {},
+      true
+    );
 
     try {
-      let query = '';
 
-      if (event.messageReply && event.messageReply.attachments && event.messageReply.attachments.length > 0) {
+      let query = "";
+
+      // ===== Reply to audio/video =====
+      if (event.messageReply && event.messageReply.attachments.length > 0) {
         const attachment = event.messageReply.attachments[0];
-        if (attachment.type === "video" || attachment.type === "audio") {
-          const shortUrl = attachment.url;
-       
-          query = await shortenURL(shortUrl);
 
-        
-          const musicRecognitionResponse = await axios.get(`https://audio-reco.onrender.com/kshitiz?url=${encodeURIComponent(shortUrl)}`);
-          query = musicRecognitionResponse.data.title;
+        if (attachment.type === "video" || attachment.type === "audio") {
+
+          const shortUrl = await shortenURL(attachment.url);
+
+          const musicRecognition = await axios.get(
+            `https://audio-reco.onrender.com/kshitiz?url=${encodeURIComponent(shortUrl)}`
+          );
+
+          query = musicRecognition.data.title;
+
         } else {
-          throw new Error("Invalid attachment type.");
+          return api.sendMessage(
+            "❌ Reply only to audio or video.",
+            event.threadID,
+            event.messageID
+          );
         }
-      } else if (args.length > 0) {
-       
-        query = args.join(" ");
-      } else {
-        api.sendMessage({ body: "Please provide a search query or reply to an audio or video." }, event.threadID, event.messageID);
-        return;
       }
 
-     
-      query += "lyricsvideoedit";
+      // ===== Text search =====
+      else if (args.length > 0) {
+        query = args.join(" ");
+      }
 
-  
-      const videos = await fetchTikTokVideos(query);
+      else {
+        return api.sendMessage(
+          "⚠️ Please provide a song name or reply to an audio/video.",
+          event.threadID,
+          event.messageID
+        );
+      }
+
+      const finalQuery = `${query} lyrics video edit`;
+      const videos = await fetchTikTokVideos(finalQuery);
 
       if (!videos || videos.length === 0) {
-        api.sendMessage({ body: `${query} not found.` }, event.threadID, event.messageID);
-        return;
+        return api.sendMessage(
+          `❌ No lyric video found for: ${query}`,
+          event.threadID,
+          event.messageID
+        );
       }
 
-   
-      const selectedVideo = videos[Math.floor(Math.random() * videos.length)];
+      const selectedVideo =
+        videos[Math.floor(Math.random() * videos.length)];
+
       const videoUrl = selectedVideo.videoUrl;
 
       if (!videoUrl) {
-        api.sendMessage({ body: 'Error: Piw Piw Chat Bot Video not found.' }, event.threadID, event.messageID);
-        return;
+        return api.sendMessage(
+          "❌ Video not found!",
+          event.threadID,
+          event.messageID
+        );
       }
 
-     
       const videoStream = await getStreamFromURL(videoUrl);
-      await api.sendMessage({
-        body: ``,
-        attachment: videoStream,
-      }, event.threadID, event.messageID);
 
-    } catch (error) {
-      console.error(error);
-      api.sendMessage({ body: 'An error occurred while processing the video.\nPlease try again later.' }, event.threadID, event.messageID);
+      api.sendMessage(
+        {
+          body:
+`╔═══ 🎶 𝗟𝗬𝗥𝗜𝗖 𝗩𝗜𝗗𝗘𝗢 🎶 ═══╗
+┃
+┃ ✨ Now Playing: ${query}
+┃ 📀 Enjoy The Music...
+┃
+┃ 👑 Admin: Mehedi Hasan
+┃ 🤖 Powered By: Hasan Chat Bot
+┃
+╚═══════════════════════╝`,
+          attachment: videoStream
+        },
+        event.threadID,
+        event.messageID
+      );
+
+    } catch (e) {
+      console.log(e);
+      api.sendMessage(
+        "❌ Error while fetching lyric video!\nTry again later.",
+        event.threadID,
+        event.messageID
+      );
     }
-  },
+  }
 };
