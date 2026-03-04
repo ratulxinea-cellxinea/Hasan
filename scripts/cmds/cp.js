@@ -5,12 +5,12 @@ module.exports = {
   config: {
     name: "cp",
     aliases: [],
-    version: "3.1",
+    version: "5.0",
     author: "Nazim",
     countDown: 5,
     role: 0,
-    shortDescription: "Stylish Bangla Caption + Auto React",
-    longDescription: "Get random stylish caption and auto react with flower & peace emojis",
+    shortDescription: "Stylish Bangla Caption + Random React",
+    longDescription: "Get stylish caption and auto-react with 50+ flower & peace emojis, change every time",
     category: "fun"
   },
 
@@ -24,7 +24,6 @@ module.exports = {
 
       $("p").each((i, el) => {
         const text = $(el).text().trim();
-
         if (
           text.length > 25 &&
           text.length < 250 &&
@@ -37,7 +36,7 @@ module.exports = {
       });
 
       if (!captions.length) {
-        return message.reply("🌸 Caption পাওয়া যায়নি! আবার চেষ্টা করো 🕊️");
+        return api.sendMessage("🌸 Caption পাওয়া যায়নি! পরে চেষ্টা করো 🕊️", event.threadID);
       }
 
       const randomCaption =
@@ -50,23 +49,26 @@ module.exports = {
         "💮","🏵️","🪻","🌵","🌴","🌙","🌤️","🌈","🌊","🧘‍♂️",
         "🧘‍♀️","💗","🤍","💞","💓","💝","🕯️","🪔","🫶","🤲",
         "🌅","🌄","🍀","🌟","🌌","🌬️","🕊","☀️","🌺","🌸",
-        "🌷","🌹","💮","🏵️","🪷","🌻","🍃","🌿","🌼","☮️"
+        "🌷","🌹","💮","🏵️","🪷","🌻","🍃","🌿","🌼","☮️",
+        "🌸","🌺","🌷","🌹","🥀","🌻","🌼","💐","🪷","🌿",
+        "🍃","🌾","🌱","🌲","🌳","🕊️","✌️","☮️","🪶","✨"
       ];
 
-      // Random 20 emojis for reactions
+      // Random 30 emojis for reactions
       const randomEmojis = emojis
         .sort(() => 0.5 - Math.random())
-        .slice(0, 20);
+        .slice(0, 30);
 
-      // Send caption message
-      const sentMessage = await message.reply(
-`╭━❀ 𝐁𝐚𝐧𝐠𝐥𝐚 𝐂𝐚𝐩𝐭𝐢𝐨𝐧 ❀━╮
+      // Stylish caption message
+      const sentMessage = await api.sendMessage(
+`╭━❀ 𝐒𝐓𝐘𝐋𝐈𝐒𝐇 𝐁𝐚𝐧𝐠𝐥𝐚 𝐂𝐚𝐩𝐭𝐢𝐨𝐧 ❀━╮
 │
 │  ${randomCaption}
 │
 ╰━❀━━━━━━━━━━━━━━❀━╯
 
-      ❀ 𝑴𝒆𝒉𝒆𝒅𝒊 𝑯𝒂𝒔𝒂𝒏 ❀`
+      ❀ 𝑴𝒆𝒉𝒆𝒅𝒊 𝑯𝒂𝒔𝒂𝒏 ❀`, 
+        event.threadID
       );
 
       // Auto-react with all selected flower & peace emojis
@@ -80,7 +82,7 @@ module.exports = {
 
     } catch (err) {
       console.error(err);
-      return message.reply("🕊️ Website থেকে caption আনতে সমস্যা হচ্ছে! পরে আবার চেষ্টা করো 🌸");
+      return api.sendMessage("🕊️ Caption আনতে সমস্যা হচ্ছে! পরে আবার চেষ্টা করো 🌸", event.threadID);
     }
   }
 };
