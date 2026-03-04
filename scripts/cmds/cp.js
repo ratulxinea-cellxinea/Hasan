@@ -5,18 +5,18 @@ module.exports = {
   config: {
     name: "cp",
     aliases: [],
-    version: "2.1",
-    author: "Hasan",
+    version: "2.3",
+    author: "Nazim",
     countDown: 5,
     role: 0,
-    shortDescription: "Stylish Bangla Caption",
-    longDescription: "Get random stylish caption from banglacaptionstatus.com",
+    shortDescription: "Stylish Bangla Caption + Auto React",
+    longDescription: "Get random stylish caption and auto react with many flower & peace emojis",
     category: "fun"
   },
 
-  onStart: async function ({ message }) {
+  onStart: async function ({ api, event, message }) {
     try {
-
+      // Fetch captions
       const res = await axios.get("https://banglacaptionstatus.com/stylish-best-caption-bangla/");
       const $ = cheerio.load(res.data);
 
@@ -50,24 +50,38 @@ module.exports = {
         "💮","🏵️","🪻","🌵","🌴","🌙","🌤️","🌈","🌊","🧘‍♂️",
         "🧘‍♀️","💗","🤍","💞","💓","💝","🕯️","🪔","🫶","🤲",
         "🌅","🌄","🍀","🌟","🌌","🌬️","🕊","☀️","🌺","🌸",
-        "🌷","🌹","💮","🏵️","🪷","🌻","🍃","🌿","🌼","☮️"
+        "🌷","🌹","💮","🏵️","🪷","🌻","🍃","🌿","🌼","☮️",
+        "🌸","🌺","🌷","🌹","🥀","🌻","🌼","💐","🪷","🌿",
+        "🍃","🌾","🌱","🌲","🌳","🕊️","✌️","☮️","🪶","✨",
+        "💮","🏵️","🪻","🌵","🌴","🌙","🌤️","🌈","🌊","🧘‍♂️",
+        "🧘‍♀️","💗","🤍","💞","💓","💝","🕯️","🪔","🫶","🤲",
+        "🌅","🌄","🍀","🌟","🌌","🌬️","🕊","☀️"
       ];
 
+      // Random 20 emojis for reactions
       const randomEmojis = emojis
         .sort(() => 0.5 - Math.random())
-        .slice(0, 12)
-        .join(" ");
+        .slice(0, 20);
 
-      return message.reply(
+      // Send caption
+      const sentMessage = await message.reply(
 `╭━❀ 𝐁𝐚𝐧𝐠𝐥𝐚 𝐂𝐚𝐩𝐭𝐢𝐨𝐧 ❀━╮
 │
 │  ${randomCaption}
 │
 ╰━❀━━━━━━━━━━━━━━❀━╯
-   ${randomEmojis}
 
       ❀ 𝑴𝒆𝒉𝒆𝒅𝒊 𝑯𝒂𝒔𝒂𝒏 ❀`
       );
+
+      // Auto-react with all selected flower & peace emojis
+      for (const emoji of randomEmojis) {
+        try {
+          await api.react(emoji, sentMessage.messageID);
+        } catch (e) {
+          console.log(`React failed for ${emoji}: ${e.message}`);
+        }
+      }
 
     } catch (err) {
       console.error(err);
