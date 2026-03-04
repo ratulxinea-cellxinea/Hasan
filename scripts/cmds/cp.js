@@ -5,12 +5,12 @@ module.exports = {
   config: {
     name: "cp",
     aliases: [],
-    version: "2.3",
+    version: "3.1",
     author: "Nazim",
     countDown: 5,
     role: 0,
     shortDescription: "Stylish Bangla Caption + Auto React",
-    longDescription: "Get random stylish caption and auto react with many flower & peace emojis",
+    longDescription: "Get random stylish caption and auto react with flower & peace emojis",
     category: "fun"
   },
 
@@ -50,12 +50,7 @@ module.exports = {
         "💮","🏵️","🪻","🌵","🌴","🌙","🌤️","🌈","🌊","🧘‍♂️",
         "🧘‍♀️","💗","🤍","💞","💓","💝","🕯️","🪔","🫶","🤲",
         "🌅","🌄","🍀","🌟","🌌","🌬️","🕊","☀️","🌺","🌸",
-        "🌷","🌹","💮","🏵️","🪷","🌻","🍃","🌿","🌼","☮️",
-        "🌸","🌺","🌷","🌹","🥀","🌻","🌼","💐","🪷","🌿",
-        "🍃","🌾","🌱","🌲","🌳","🕊️","✌️","☮️","🪶","✨",
-        "💮","🏵️","🪻","🌵","🌴","🌙","🌤️","🌈","🌊","🧘‍♂️",
-        "🧘‍♀️","💗","🤍","💞","💓","💝","🕯️","🪔","🫶","🤲",
-        "🌅","🌄","🍀","🌟","🌌","🌬️","🕊","☀️"
+        "🌷","🌹","💮","🏵️","🪷","🌻","🍃","🌿","🌼","☮️"
       ];
 
       // Random 20 emojis for reactions
@@ -63,7 +58,7 @@ module.exports = {
         .sort(() => 0.5 - Math.random())
         .slice(0, 20);
 
-      // Send caption
+      // Send caption message
       const sentMessage = await message.reply(
 `╭━❀ 𝐁𝐚𝐧𝐠𝐥𝐚 𝐂𝐚𝐩𝐭𝐢𝐨𝐧 ❀━╮
 │
