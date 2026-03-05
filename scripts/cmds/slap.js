@@ -5,13 +5,13 @@ const path = require("path");
 module.exports = {
     config: {
         name: "slap",
-        version: "1.5",
+        version: "1.7",
         author: "SaGor",
         countDown: 5,
         role: 0,
         shortDescription: "Fun slap image",
         longDescription: "Send a fun slap image with reactions",
-        category: "𝗙𝗨𝗡 & 𝗚𝗔𝗠𝗘",
+        category: "FUN & GAME",
         guide: { en: "{pn} @tag or reply" }
     },
 
@@ -19,48 +19,50 @@ module.exports = {
         en: { noTag: "যারে থাপড়াবি ওরে মেনশন দে বা reply কর 🤓" }
     },
 
-    onStart: async function ({ event, message, usersData, args, getLang, api }) {
-        const uid1 = event.senderID;
-        let uid2;
+    onStart: async function({ event, message, usersData, args, getLang, api }) {
+        const senderID = event.senderID;
+        let targetID;
 
-        // Only check mention or reply
         if (Object.keys(event.mentions).length > 0) {
-            uid2 = Object.keys(event.mentions)[0];
+            targetID = Object.keys(event.mentions)[0];
         } else if (event.messageReply) {
-            uid2 = event.messageReply.senderID;
-        } else return message.reply(getLang("noTag"));
-
-        // Get avatars
-        const avatar1 = await usersData.getAvatarUrl(uid1);
-        const avatar2 = await usersData.getAvatarUrl(uid2);
+            targetID = event.messageReply.senderID;
+        } else {
+            return message.reply(getLang("noTag"));
+        }
 
         try {
-            // Generate slap image (you can change to another style if you have)
-            const imageBuffer = await new DIG.Slap().getImage(avatar1, avatar2);
+            const avatar1 = await usersData.getAvatarUrl(senderID);
+            const avatar2 = await usersData.getAvatarUrl(targetID);
+
+            // Generate slap image
+            const slapImage = await new DIG.Slap().getImage(avatar1, avatar2);
 
             // Save temp
             const tmpDir = path.join(__dirname, "tmp");
             if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
-            const savePath = path.join(tmpDir, `${uid1}_${uid2}_slap.png`);
-            fs.writeFileSync(savePath, imageBuffer);
+            const filePath = path.join(tmpDir, `${senderID}_${targetID}_slap.png`);
+            fs.writeFileSync(filePath, slapImage);
 
-            // Clean content
+            // Message content
             const content = args.join(" ").replace(Object.keys(event.mentions)[0] || "", "").trim() || "Bópppp 😵‍💫😵";
 
-            // Reply with image
-            message.reply({ body: content, attachment: fs.createReadStream(savePath) }, async (err, info) => {
-                fs.unlinkSync(savePath); // delete temp
+            // Send message
+            message.reply({ body: content, attachment: fs.createReadStream(filePath) }, async (err, info) => {
+                fs.unlinkSync(filePath); // delete after send
 
-                // Add multiple reactions
-                const reactions = ["😂","😵","💥","🤕","😎"];
-                for (let emoji of reactions) {
-                    try { await api.sendMessage({ react: { emoji, mid: info.messageID } }, event.threadID); }
-                    catch(e){ console.log(e); }
+                // Add reactions
+                const reactions = ["😂","😵","💥","🤕","😎","🤣","😡","😱","💢","👊"];
+                for (const emoji of reactions) {
+                    try {
+                        await api.sendMessage({ react: { emoji, mid: info.messageID } }, event.threadID);
+                    } catch(e) { console.log(e); }
                 }
             });
+
         } catch(e) {
-            console.log("Slap generation failed:", e);
-            message.reply("😓 ছবি তৈরি করা যায়নি, আবার try কর।");
+            console.error("Slap image error:", e);
+            return message.reply("😓 ছবি তৈরি করা যায়নি, আবার try কর।");
         }
     }
 };
