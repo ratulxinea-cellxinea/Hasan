@@ -14,7 +14,7 @@ const mahmud = async () => {
 
     cachedBaseURL = data.mahmud;
     return cachedBaseURL;
-  } catch (e) {
+  } catch {
     throw new Error("API load failed");
   }
 };
@@ -22,8 +22,8 @@ const mahmud = async () => {
 module.exports = {
   config: {
     name: "edit",
-    version: "2.1",
-    author: "MahMUD + Fix",
+    version: "3.1",
+    author: "MahMUD + Nazim Fix",
     countDown: 5,
     role: 0,
     category: "image",
@@ -36,10 +36,10 @@ module.exports = {
     const replied = event.messageReply?.attachments?.[0];
 
     if (!replied || replied.type !== "photo")
-      return message.reply("📸 | একটা ছবিতে reply কর");
+      return message.reply("📸 | ছবিতে reply কর");
 
     if (!prompt)
-      return message.reply("✏️ | কি edit করতে চাস লিখ");
+      return message.reply("✏️ | কি edit করবো লিখ");
 
     api.setMessageReaction("🪄", event.messageID, () => {}, true);
 
@@ -48,7 +48,7 @@ module.exports = {
 
     const imgPath = path.join(cacheDir, `${Date.now()}.jpg`);
 
-    const wait = await message.reply("⏳ | Image edit হচ্ছে... একটু wait কর");
+    const wait = await message.reply("⏳ | Edit হচ্ছে... একটু wait কর");
 
     try {
 
@@ -58,7 +58,7 @@ module.exports = {
         method: "GET",
         url: `${baseURL}/api/edit`,
         params: {
-          prompt: prompt,
+          prompt: prompt, // এখানে যেভাবে লিখবি, ঠিক সেভাবেই যাবে
           imageUrl: replied.url
         },
         responseType: "arraybuffer"
@@ -69,7 +69,7 @@ module.exports = {
       api.setMessageReaction("✅", event.messageID, () => {}, true);
 
       await message.reply({
-        body: `✅ Edit Complete\n\nPrompt: ${prompt}`,
+        body: `✅ Edit Done\n\nPrompt: ${prompt}`,
         attachment: fs.createReadStream(imgPath)
       });
 
@@ -79,7 +79,7 @@ module.exports = {
 
       api.setMessageReaction("❌", event.messageID, () => {}, true);
 
-      message.reply("❌ | Server error, পরে আবার try কর");
+      message.reply("❌ | Server error");
     }
 
     setTimeout(() => {
