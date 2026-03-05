@@ -2,127 +2,165 @@ const { config } = global.GoatBot;
 const { writeFileSync } = require("fs-extra");
 
 module.exports = {
-	config: {
-		name: "vip",
-		version: "3.1",
-		author: "Hasan",
-		countDown: 5,
-		role: 2,
-		description: "VIP system with time",
-		category: "owner",
-		guide: "{pn} add/remove/list/check"
-	},
+  config: {
+    name: "vip",
+    version: "4.0",
+    author: "Hasan",
+    countDown: 5,
+    role: 2,
+    description: "VIP System",
+    category: "owner",
+    guide: {
+      en:
+`vip add [uid/@tag/reply] [days]
+vip remove [uid]
+vip list
+vip check`
+    }
+  },
 
-	onStart: async function ({ api, args, usersData, event }) {
+  onStart: async function ({ api, args, event, usersData }) {
 
-		const { threadID, messageID } = event;
-		const action = args[0]?.toLowerCase();
+    const { threadID, messageID } = event;
+    const action = args[0];
 
-		if (!config.vipUser)
-			config.vipUser = {};
+    if (!config.vipUser)
+      config.vipUser = {};
 
-		// NAME FIX FUNCTION
-		async function getUserName(uid) {
-			try {
-				const name = await usersData.getName(uid);
-				if (!name || name === "null")
-					return `User ${uid}`;
-				return name;
-			}
-			catch {
-				return `User ${uid}`;
-			}
-		}
+    // NAME FIX
+    async function getName(uid) {
+      try {
+        let name = await usersData.getName(uid);
+        if (!name) name = "Unknown User";
+        return name;
+      } catch {
+        return "Unknown User";
+      }
+    }
 
-		switch (action) {
+    // MENU
+    if (!action) {
 
-			case "add": {
+      api.setMessageReaction("👑", messageID, () => {}, true);
 
-				let uid =
-					Object.keys(event.mentions)[0] ||
-					event.messageReply?.senderID ||
-					args[1];
+      return api.sendMessage(
+`👑 VIP SYSTEM 👑
 
-				let days = parseInt(args[2]) || 1;
+vip add [uid/@tag] [days]
+vip remove [uid]
+vip list
+vip check @user
 
-				if (!uid)
-					return api.sendMessage("⚠️ UID / Tag / Reply dao", threadID, messageID);
+Example:
+vip add 1000xxxxx 7`,
+        threadID,
+        messageID
+      );
+    }
 
-				const name = await getUserName(uid);
+    // ADD VIP
+    if (action === "add") {
 
-				const expire = Date.now() + days * 86400000;
+      let uid =
+        Object.keys(event.mentions)[0] ||
+        event.messageReply?.senderID ||
+        args[1];
 
-				config.vipUser[uid] = expire;
+      let days = parseInt(args[2]) || 30;
 
-				writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+      if (!uid)
+        return api.sendMessage("UID / Tag dao", threadID, messageID);
 
-				return api.sendMessage({
-					body: `👑 ${name}
+      const expire = Date.now() + days * 86400000;
+
+      config.vipUser[uid] = expire;
+
+      writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+
+      const name = await getName(uid);
+
+      api.setMessageReaction("👑", messageID, () => {}, true);
+
+      return api.sendMessage(
+`👑 ${name}
 
 Baby tmi ekon theke VIP user 😘
-⏳ Time: ${days} day`,
-					mentions: [{ id: uid, tag: name }]
-				}, threadID, messageID);
-			}
+⏳ VIP Time: ${days} days`,
+        threadID,
+        messageID
+      );
+    }
 
-			case "remove": {
+    // REMOVE VIP
+    if (action === "remove") {
 
-				let uid =
-					Object.keys(event.mentions)[0] ||
-					event.messageReply?.senderID ||
-					args[1];
+      let uid =
+        Object.keys(event.mentions)[0] ||
+        event.messageReply?.senderID ||
+        args[1];
 
-				if (!uid)
-					return api.sendMessage("⚠️ UID / Tag dao", threadID, messageID);
+      if (!config.vipUser[uid])
+        return api.sendMessage("User VIP na", threadID, messageID);
 
-				if (!config.vipUser[uid])
-					return api.sendMessage("❌ User VIP na", threadID, messageID);
+      delete config.vipUser[uid];
 
-				delete config.vipUser[uid];
+      writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
 
-				writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
+      api.setMessageReaction("👑", messageID, () => {}, true);
 
-				return api.sendMessage("🚫 VIP Removed", threadID, messageID);
-			}
+      return api.sendMessage("🚫 VIP Removed", threadID, messageID);
+    }
 
-			case "list": {
+    // VIP LIST
+    if (action === "list") {
 
-				if (Object.keys(config.vipUser).length === 0)
-					return api.sendMessage("❌ VIP list empty", threadID, messageID);
+      let msg = "👑 VIP USER LIST 👑\n\n";
 
-				let msg = "👑 VIP USER LIST 👑\n\n";
-				let i = 1;
+      let i = 1;
 
-				for (const uid in config.vipUser) {
+      for (const uid in config.vipUser) {
 
-					const name = await getUserName(uid);
+        const name = await getName(uid);
 
-					const timeLeft = Math.floor((config.vipUser[uid] - Date.now()) / 86400000);
+        const daysLeft = Math.floor(
+          (config.vipUser[uid] - Date.now()) / 86400000
+        );
 
-					msg += `${i}. ${name}\nUID: ${uid}\n⏳ ${timeLeft} day left\n\n`;
+        msg += `${i}. ${name}\nUID: ${uid}\n⏳ ${daysLeft} days left\n\n`;
 
-					i++;
-				}
+        i++;
+      }
 
-				return api.sendMessage(msg, threadID, messageID);
-			}
+      api.setMessageReaction("👑", messageID, () => {}, true);
 
-			case "check": {
+      return api.sendMessage(msg, threadID, messageID);
+    }
 
-				let uid =
-					Object.keys(event.mentions)[0] ||
-					event.messageReply?.senderID ||
-					event.senderID;
+    // CHECK VIP
+    if (action === "check") {
 
-				const name = await getUserName(uid);
+      let uid =
+        Object.keys(event.mentions)[0] ||
+        event.messageReply?.senderID ||
+        event.senderID;
 
-				if (!config.vipUser[uid])
-					return api.sendMessage(`❌ ${name} VIP na`, threadID, messageID);
+      const name = await getName(uid);
 
-				const timeLeft = Math.floor((config.vipUser[uid] - Date.now()) / 86400000);
+      if (!config.vipUser[uid])
+        return api.sendMessage(`${name} VIP na`, threadID, messageID);
 
-				return api.sendMessage(`👑 ${name} VIP user\n⏳ ${timeLeft} day left`, threadID, messageID);
-			}
-		}
-	}
+      const daysLeft = Math.floor(
+        (config.vipUser[uid] - Date.now()) / 86400000
+      );
+
+      api.setMessageReaction("👑", messageID, () => {}, true);
+
+      return api.sendMessage(
+`👑 ${name}
+⏳ VIP Remaining: ${daysLeft} days`,
+        threadID,
+        messageID
+      );
+    }
+  }
 };
