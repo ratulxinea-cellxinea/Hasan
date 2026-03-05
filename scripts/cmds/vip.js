@@ -4,18 +4,20 @@ const { writeFileSync } = require("fs-extra");
 module.exports = {
   config: {
     name: "vip",
-    version: "4.0",
+    version: "4.1",
     author: "Hasan",
     countDown: 5,
     role: 2,
-    description: "VIP System",
+    description: "VIP System with auto-expire",
     category: "owner",
     guide: {
       en:
-`vip add [uid/@tag/reply] [days]
+`vip add [uid/@tag/reply] [time]
 vip remove [uid]
 vip list
-vip check`
+vip check @user
+
+Time format: 30d = 30 days, 12h = 12 hours, 30m = 30 minutes`
     }
   },
 
@@ -26,6 +28,15 @@ vip check`
 
     if (!config.vipUser)
       config.vipUser = {};
+
+    // REMOVE EXPIRED VIPs
+    const now = Date.now();
+    for (const uid in config.vipUser) {
+      if (config.vipUser[uid] <= now) {
+        delete config.vipUser[uid];
+      }
+    }
+    writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
 
     // NAME FIX
     async function getName(uid) {
@@ -38,21 +49,20 @@ vip check`
       }
     }
 
-    // MENU
+    // NO ACTION -> MENU
     if (!action) {
-
       api.setMessageReaction("👑", messageID, () => {}, true);
 
       return api.sendMessage(
 `👑 VIP SYSTEM 👑
 
-vip add [uid/@tag] [days]
+vip add [uid/@tag/reply] [time]
 vip remove [uid]
 vip list
 vip check @user
 
 Example:
-vip add 1000xxxxx 7`,
+vip add 1000xxxxx 12h`,
         threadID,
         messageID
       );
@@ -60,32 +70,39 @@ vip add 1000xxxxx 7`,
 
     // ADD VIP
     if (action === "add") {
-
       let uid =
         Object.keys(event.mentions)[0] ||
         event.messageReply?.senderID ||
         args[1];
 
-      let days = parseInt(args[2]) || 30;
-
       if (!uid)
         return api.sendMessage("UID / Tag dao", threadID, messageID);
 
-      const expire = Date.now() + days * 86400000;
+      let timeArg = args[2] || "30d"; // default 30 days
+      let expire = Date.now();
+
+      const match = timeArg.match(/^(\d+)(d|h|m)$/i);
+      if (!match)
+        return api.sendMessage("Time format wrong! Use 30d / 12h / 45m", threadID, messageID);
+
+      const value = parseInt(match[1]);
+      const unit = match[2].toLowerCase();
+
+      if (unit === "d") expire += value * 86400000;
+      if (unit === "h") expire += value * 3600000;
+      if (unit === "m") expire += value * 60000;
 
       config.vipUser[uid] = expire;
-
       writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
 
       const name = await getName(uid);
-
       api.setMessageReaction("👑", messageID, () => {}, true);
 
       return api.sendMessage(
 `👑 ${name}
 
 Baby tmi ekon theke VIP user 😘
-⏳ VIP Time: ${days} days`,
+⏳ VIP Time: ${timeArg}`,
         threadID,
         messageID
       );
@@ -93,7 +110,6 @@ Baby tmi ekon theke VIP user 😘
 
     // REMOVE VIP
     if (action === "remove") {
-
       let uid =
         Object.keys(event.mentions)[0] ||
         event.messageReply?.senderID ||
@@ -103,42 +119,37 @@ Baby tmi ekon theke VIP user 😘
         return api.sendMessage("User VIP na", threadID, messageID);
 
       delete config.vipUser[uid];
-
       writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
 
       api.setMessageReaction("👑", messageID, () => {}, true);
-
       return api.sendMessage("🚫 VIP Removed", threadID, messageID);
     }
 
     // VIP LIST
     if (action === "list") {
-
       let msg = "👑 VIP USER LIST 👑\n\n";
-
       let i = 1;
 
       for (const uid in config.vipUser) {
-
         const name = await getName(uid);
+        const msLeft = config.vipUser[uid] - Date.now();
 
-        const daysLeft = Math.floor(
-          (config.vipUser[uid] - Date.now()) / 86400000
-        );
+        if (msLeft <= 0) continue; // skip expired
 
-        msg += `${i}. ${name}\nUID: ${uid}\n⏳ ${daysLeft} days left\n\n`;
+        let days = Math.floor(msLeft / 86400000);
+        let hours = Math.floor((msLeft % 86400000) / 3600000);
+        let minutes = Math.floor((msLeft % 3600000) / 60000);
 
+        msg += `${i}. ${name}\nUID: ${uid}\n⏳ ${days}d ${hours}h ${minutes}m left\n\n`;
         i++;
       }
 
       api.setMessageReaction("👑", messageID, () => {}, true);
-
-      return api.sendMessage(msg, threadID, messageID);
+      return api.sendMessage(msg || "No VIP users", threadID, messageID);
     }
 
     // CHECK VIP
     if (action === "check") {
-
       let uid =
         Object.keys(event.mentions)[0] ||
         event.messageReply?.senderID ||
@@ -149,15 +160,19 @@ Baby tmi ekon theke VIP user 😘
       if (!config.vipUser[uid])
         return api.sendMessage(`${name} VIP na`, threadID, messageID);
 
-      const daysLeft = Math.floor(
-        (config.vipUser[uid] - Date.now()) / 86400000
-      );
+      const msLeft = config.vipUser[uid] - Date.now();
+      if (msLeft <= 0)
+        return api.sendMessage(`${name} VIP na`, threadID, messageID);
+
+      let days = Math.floor(msLeft / 86400000);
+      let hours = Math.floor((msLeft % 86400000) / 3600000);
+      let minutes = Math.floor((msLeft % 3600000) / 60000);
 
       api.setMessageReaction("👑", messageID, () => {}, true);
 
       return api.sendMessage(
 `👑 ${name}
-⏳ VIP Remaining: ${daysLeft} days`,
+⏳ VIP Remaining: ${days}d ${hours}h ${minutes}m`,
         threadID,
         messageID
       );
