@@ -4,71 +4,58 @@ const { commands, aliases } = global.GoatBot;
 module.exports = {
   config: {
     name: "help",
-    version: "1.17",
-    author: "Ktkhang | modified MahMUD",
+    version: "1.20",
+    author: "Ktkhang | MahMUD",
     countDown: 5,
     role: 0,
-    shortDescription: {
-      en: "View command usage and list all commands directly",
-    },
-    longDescription: {
-      en: "View command usage and list all commands directly",
-    },
+    shortDescription: { en: "View command usage in stylish format with VIP highlight" },
+    longDescription: { en: "List all commands with VIP commands highlighted separately" },
     category: "info",
-    guide: {
-      en: "help cmdName",
-    },
+    guide: { en: "help <command>" },
     priority: 1,
   },
 
   onStart: async function ({ message, args, event, threadsData, role }) {
     const { threadID } = event;
-    const threadData = await threadsData.get(threadID);
     const prefix = getPrefix(threadID);
 
-    if (args.length === 0) {
+    if (!args.length) {
       const categories = {};
-      let msg = "";
+      let msg = `✨💫 𝗖𝗼𝗺𝗺𝗮𝗻𝗱 𝗟𝗶𝘀𝘁 💫✨\n\n`;
 
-      msg += ``; 
-
+      // Group commands by category (excluding VIP first)
       for (const [name, value] of commands) {
-        if (value.config.role > 1 && role < value.config.role) continue;
-
+        if (value.config.role > 1) continue; // skip VIP for now
         const category = value.config.category || "Uncategorized";
         categories[category] = categories[category] || { commands: [] };
-        categories[category].commands.push(name);
+        categories[category].commands.push(value.config.name);
       }
 
-      Object.keys(categories).forEach((category) => {
-        if (category !== "info") {
-          msg += `\n╭─────⭓ ${category.toUpperCase()}`;
+      // Normal commands section
+      for (const category of Object.keys(categories)) {
+        const cmds = categories[category].commands.sort().map(c => `⚡ ${c}`).join("  ");
+        msg += `╭─⭓ 🔹 ${category.toUpperCase()}\n│ ${cmds}\n╰────────────⭓\n\n`;
+      }
 
-          const names = categories[category].commands.sort();
-          for (let i = 0; i < names.length; i += 3) {
-            const cmds = names.slice(i, i + 2).map((item) => `✧${item}`);
-            msg += `\n│${cmds.join(" ".repeat(Math.max(1, 5 - cmds.join("").length)))}`;
-          }
+      // VIP commands section (role > 1)
+      const vipCmdsList = Array.from(commands.values())
+        .filter(c => c.config.role > 1)
+        .map(c => `🔥 ${c.config.name}`); // VIP commands highlighted with 🔥
 
-          msg += `\n╰────────────⭓\n`;
-        }
-      });
+      if (vipCmdsList.length) {
+        const vipCmds = vipCmdsList.join("  ");
+        msg += `╭─⭓ 🔐 VIP COMMANDS 🔐\n│ ${vipCmds}\n╰────────────⭓\n\n`;
+        msg += `💎 Only VIP users can access these commands\n\n`;
+      }
 
-      const totalCommands = commands.size;
-      msg += `\n\n⭔Bot has ${totalCommands} commands\n⭔Type ${prefix}𝐡𝐞𝐥𝐩 <𝚌𝚘𝚖𝚖𝚊𝚗𝚍 𝚗𝚊𝚖𝚎> to learn Usage.\n`;
-      msg += ``;
-      msg += `\n╭─✦ADMIN: Mehedi Hasan彡\n├‣ FACEBOOK\n╰‣:https://www.facebook.com/profile.php?id=61584451283974`; // customize this section if needed
+      msg += `💡 Type ${prefix}help <command> to see usage\n`;
+      msg += `🛡 Admin: Mehedi Hasan`;
 
       try {
-        const hh = await message.reply({ body: msg });
-
-        // Automatically unsend the message after 30 seconds
-        setTimeout(() => {
-          message.unsend(hh.messageID);
-        }, 80000);
-
-      } catch (error) {
-        console.error("Error sending help message:", error);
+        const sent = await message.reply({ body: msg });
+        setTimeout(() => message.unsend(sent.messageID), 80000);
+      } catch (err) {
+        console.error("Error sending help message:", err);
       }
 
     } else {
@@ -76,38 +63,44 @@ module.exports = {
       const command = commands.get(commandName) || commands.get(aliases.get(commandName));
 
       if (!command) {
-        await message.reply(`Command "${commandName}" not found.`);
-      } else {
-        const configCommand = command.config;
-        const roleText = roleTextToString(configCommand.role);
-        const author = configCommand.author || "Unknown";
+        await message.reply(`❌ Command "${commandName}" not found.`);
+        return;
+      }
 
-        const longDescription = configCommand.longDescription ? configCommand.longDescription.en || "No description" : "No description";
+      const cfg = command.config;
+      const roleStr = roleTextToString(cfg.role);
+      const longDesc = cfg.longDescription?.en || "No description";
+      const guideBody = cfg.guide?.en || "No guide available";
+      const usage = guideBody.replace(/{he}/g, prefix).replace(/{lp}/g, cfg.name);
 
-        const guideBody = configCommand.guide?.en || "No guide available.";
-        const usage = guideBody.replace(/{he}/g, prefix).replace(/{lp}/g, configCommand.name);
+      const detailedMsg = `
+╭─⭓ 🎀 ${cfg.name.toUpperCase()}
+│ 📃 Aliases: ${cfg.aliases?.join(", ") || "None"}
+├── INFO
+│ 📝 Description: ${longDesc}
+│ 👑 Admin: Mehedi Hasan
+│ 📚 Guide: ${usage}
+├── Usage
+│ ⭐ Version: ${cfg.version || "1.0"}
+│ 🔐 Role: ${roleStr}
+╰────────────⭓
+      `;
 
-        const response = `╭─────────⭓\n│ 🎀 NAME: ${configCommand.name}\n│ 📃 Aliases: ${configCommand.aliases ? configCommand.aliases.join(", ") : "Do not have"}\n├──‣ INFO\n│ 📝 𝗗𝗲𝘀𝗰𝗿𝗶𝗽𝘁𝗶𝗼𝗻: ${longDescription}\n│ 👑 𝗔𝗱𝗺𝗶𝗻: 𝐌𝐚𝐡𝐌𝐔𝐃\n│ 📚 𝗚𝘂𝗶𝗱𝗲: ${usage}\n├──‣ Usage\n│ ⭐ 𝗩𝗲𝗿𝘀𝗶𝗼𝗻: ${configCommand.version || "1.0"}\n│ ♻️ 𝗥𝗼𝗹𝗲: ${roleText}\n╰────────────⭓`;
-
-        const helpMessage = await message.reply(response);
-
-          setTimeout(() => {
-          message.unsend(helpMessage.messageID);
-        }, 80000);
+      try {
+        const sent = await message.reply(detailedMsg);
+        setTimeout(() => message.unsend(sent.messageID), 80000);
+      } catch (err) {
+        console.error("Error sending command info:", err);
       }
     }
   },
 };
 
-function roleTextToString(roleText) {
-  switch (roleText) {
-    case 0:
-      return "0 (All users)";
-    case 1:
-      return "1 (Group administrators)";
-    case 2:
-      return "2 (Admin bot)";
-    default:
-      return "Unknown role";
+function roleTextToString(roleNum) {
+  switch (roleNum) {
+    case 0: return "0 (All users)";
+    case 1: return "1 (Group admins)";
+    case 2: return "2 (VIP / Bot admins)";
+    default: return "Unknown role";
   }
-	      }
+}
