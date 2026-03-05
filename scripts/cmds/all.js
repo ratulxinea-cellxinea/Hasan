@@ -1,7 +1,7 @@
 module.exports = {
 	config: {
 		name: "all",
-		version: "2.0",
+		version: "3.0",
 		author: "NTKhang + Edit",
 		countDown: 5,
 		role: 1,
@@ -21,20 +21,22 @@ module.exports = {
 		const { participantIDs } = event;
 
 		if (!participantIDs || participantIDs.length === 0)
-			return message.reply("❌ Member পাওয়া যায়নি");
+			return message.reply("❌ গ্রুপে কোনো member পাওয়া যায়নি!");
 
-		let body = "📣 𝗘𝗩𝗘𝗥𝗬𝗢𝗡𝗘 𝗔𝗟𝗘𝗥𝗧\n\n🐸 সবাই চিপা থেকে বের হও!\n🔥 না হলে আগুন দিমু!\n\n";
+		let body = `📢 𝗘𝗩𝗘𝗥𝗬𝗢𝗡𝗘 𝗖𝗔𝗟𝗟 📢
 
-		const mentions = [];
+🐸 সবাই চিপা থেকে বের হও!
+🔥 না হলে আগুন দিমু!
 
-		for (let i = 0; i < participantIDs.length; i++) {
-			body += "@ ";
-			mentions.push({
-				tag: "@",
-				id: participantIDs[i],
-				fromIndex: body.length - 2
-			});
-		}
+😂 যারা লুকাইয়া আছো, ধরা খাইবা কিন্তু!
+👀 গ্রুপে এসে একটা হাই দাও!
+
+━━━━━━━━━━━━━━`;
+
+		const mentions = participantIDs.map(id => ({
+			tag: "‎",
+			id
+		}));
 
 		return message.reply({
 			body,
