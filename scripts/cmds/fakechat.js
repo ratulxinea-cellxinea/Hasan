@@ -11,7 +11,7 @@ module.exports = {
   config: {
     name: "fakechat",
     aliases: ["fc", "F", "fake"],
-    version: "2.1",
+    version: "2.2",
     author: "MahMUD",
     role: 0,
     category: "fun",
@@ -21,8 +21,11 @@ module.exports = {
 
   onStart: async ({ event, message, args, usersData, api, config }) => {
 
+    // SAFETY: Ensure vipUser exists
+    if (!config.vipUser) config.vipUser = {};
+
     // VIP CHECK
-    if (!config.vipUser || !config.vipUser[event.senderID] || config.vipUser[event.senderID] < Date.now()) {
+    if (!config.vipUser[event.senderID] || config.vipUser[event.senderID] < Date.now()) {
       return message.reply(
         "❌❌ | Only 👑 VIP users can use this command!\n✨ Become VIP to unlock **Xineas BBZChat Bot** stylish fake chats!"
       );
@@ -77,7 +80,8 @@ module.exports = {
         try { fs.unlinkSync(filePath); } catch {}
       }, 5000);
 
-    } catch {
+    } catch (err) {
+      console.error(err);
       await message.reply("🥹 Error occurred! Contact **Xineas BBZChat Bot Support**.");
     }
   },
