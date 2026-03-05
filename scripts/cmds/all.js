@@ -1,42 +1,44 @@
 module.exports = {
 	config: {
 		name: "all",
-		version: "1.2",
-		author: "NTKhang",
+		version: "2.0",
+		author: "NTKhang + Edit",
 		countDown: 5,
 		role: 1,
-		description: {
-			vi: "Tag tất cả thành viên trong nhóm chat của bạn",
-			en: "Tag all members in your group chat"
+		shortDescription: {
+			en: "Tag everyone"
 		},
-		category: "box chat",
+		longDescription: {
+			en: "Tag all members in the group"
+		},
+		category: "BOX CHAT",
 		guide: {
-			vi: "   {pn} [nội dung | để trống]",
-			en: "   {pn} [content | empty]"
+			en: "{pn}"
 		}
 	},
 
-	onStart: async function ({ message, event, args }) {
+	onStart: async function ({ message, event }) {
 		const { participantIDs } = event;
-		const lengthAllUser = participantIDs.length;
+
+		if (!participantIDs || participantIDs.length === 0)
+			return message.reply("❌ Member পাওয়া যায়নি");
+
+		let body = "📣 𝗘𝗩𝗘𝗥𝗬𝗢𝗡𝗘 𝗔𝗟𝗘𝗥𝗧\n\n🐸 সবাই চিপা থেকে বের হও!\n🔥 না হলে আগুন দিমু!\n\n";
+
 		const mentions = [];
-		let body = args.join(" ") || "@all";
-		let bodyLength = body.length;
-		let i = 0;
-		for (const uid of participantIDs) {
-			let fromIndex = 0;
-			if (bodyLength < lengthAllUser) {
-				body += body[bodyLength - 1];
-				bodyLength++;
-			}
-			if (body.slice(0, i).lastIndexOf(body[i]) != -1)
-				fromIndex = i;
+
+		for (let i = 0; i < participantIDs.length; i++) {
+			body += "@ ";
 			mentions.push({
-				tag: body[i],
-				id: uid, fromIndex
+				tag: "@",
+				id: participantIDs[i],
+				fromIndex: body.length - 2
 			});
-			i++;
 		}
-		message.reply({ body, mentions });
+
+		return message.reply({
+			body,
+			mentions
+		});
 	}
 };
