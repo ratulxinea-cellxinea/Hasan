@@ -3,7 +3,9 @@ const fs = require("fs");
 const path = require("path");
 
 const mahmhd = async () => {
-  const base = await axios.get("https://raw.githubusercontent.com/mahmudx7/exe/main/baseApiUrl.json");
+  const base = await axios.get(
+    "https://raw.githubusercontent.com/mahmudx7/exe/main/baseApiUrl.json"
+  );
   return base.data.mahmud;
 };
 
@@ -11,21 +13,22 @@ module.exports = {
   config: {
     name: "fakechat",
     aliases: ["fc", "F", "fake"],
-    version: "2.2",
+    version: "2.3",
     author: "MahMUD",
     role: 0,
     category: "fun",
     description: "Generate fake chat (VIP Only) with stylish Xineas BBZChat Bot",
     countDown: 5,
+    vipUser: {}, // VIP object
   },
 
   onStart: async ({ event, message, args, usersData, api, config }) => {
-
-    // SAFETY: Ensure vipUser exists
+    // ✅ Ensure vipUser exists
     if (!config.vipUser) config.vipUser = {};
 
-    // VIP CHECK
-    if (!config.vipUser[event.senderID] || config.vipUser[event.senderID] < Date.now()) {
+    // 🔒 VIP CHECK — only VIP can use
+    const vipTime = config.vipUser[event.senderID] || 0;
+    if (vipTime < Date.now()) {
       return message.reply(
         "❌❌ | Only 👑 VIP users can use this command!\n✨ Become VIP to unlock **Xineas BBZChat Bot** stylish fake chats!"
       );
