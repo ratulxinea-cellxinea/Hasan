@@ -23,8 +23,9 @@ module.exports = {
   },
 
   onStart: async ({ event, message, args, usersData, api, config }) => {
-    // ✅ Ensure vipUser exists
-    if (!config.vipUser) config.vipUser = {};
+    // ✅ Ensure config exists
+    config = config || {};
+    config.vipUser = config.vipUser || {};
 
     // 🔒 VIP CHECK — only VIP can use
     const vipTime = config.vipUser[event.senderID] || 0;
