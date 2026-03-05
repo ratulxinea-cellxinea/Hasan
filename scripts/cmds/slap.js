@@ -3,75 +3,70 @@ const fs = require("fs-extra");
 const path = require("path");
 
 module.exports = {
-	config: {
-		name: "slap",
-		version: "3.0",
-		author: "SaGor Fixed",
-		countDown: 5,
-		role: 0,
-		shortDescription: "Slap someone",
-		longDescription: "Send slap image",
-		category: "FUN & GAME",
-		guide: {
-			en: "{pn} @tag / reply"
-		}
-	},
+  config: {
+    name: "slap",
+    version: "4.0",
+    author: "SaGor Fixed",
+    countDown: 5,
+    role: 0,
+    shortDescription: "Slap someone",
+    longDescription: "Send slap gif",
+    category: "FUN & GAME",
+    guide: {
+      en: "{pn} @tag / reply"
+    }
+  },
 
-	langs: {
-		en: {
-			noTag: "যারে থাপড় দিবি ওরে mention দে বা reply কর 🤓"
-		}
-	},
+  langs: {
+    en: {
+      noTag: "যারে থাপ্পড় দিবি তাকে mention দে বা reply কর 🤓"
+    }
+  },
 
-	onStart: async function ({ event, message, usersData, args, getLang }) {
+  onStart: async function ({ event, message, args, getLang }) {
 
-		const senderID = event.senderID;
-		let targetID;
+    let targetID;
 
-		if (Object.keys(event.mentions).length > 0) {
-			targetID = Object.keys(event.mentions)[0];
-		}
-		else if (event.messageReply) {
-			targetID = event.messageReply.senderID;
-		}
-		else {
-			return message.reply(getLang("noTag"));
-		}
+    if (Object.keys(event.mentions).length > 0) {
+      targetID = Object.keys(event.mentions)[0];
+    } 
+    else if (event.messageReply) {
+      targetID = event.messageReply.senderID;
+    } 
+    else {
+      return message.reply(getLang("noTag"));
+    }
 
-		try {
+    try {
 
-			const avatar1 = `https://graph.facebook.com/${senderID}/picture?width=512&height=512`;
-			const avatar2 = `https://graph.facebook.com/${targetID}/picture?width=512&height=512`;
+      // slap gif API
+      const res = await axios.get("https://nekos.best/api/v2/slap");
+      const imageUrl = res.data.results[0].url;
 
-			const api = `https://nekos.life/api/v2/img/slap`;
+      const img = await axios.get(imageUrl, { responseType: "arraybuffer" });
 
-			const res = await axios.get(api);
-			const imageUrl = res.data.url;
+      const tmpDir = path.join(__dirname, "tmp");
+      if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
 
-			const img = await axios.get(imageUrl, { responseType: "arraybuffer" });
+      const filePath = path.join(tmpDir, `slap_${Date.now()}.gif`);
 
-			const tmpDir = path.join(__dirname, "tmp");
-			if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
+      fs.writeFileSync(filePath, Buffer.from(img.data));
 
-			const filePath = path.join(tmpDir, `slap_${Date.now()}.jpg`);
+      const text =
+        args.join(" ")
+          .replace(Object.keys(event.mentions)[0] || "", "")
+          .trim() || "💥 ধামাকা থাপ্পড়!";
 
-			fs.writeFileSync(filePath, Buffer.from(img.data));
+      await message.reply({
+        body: text,
+        attachment: fs.createReadStream(filePath)
+      });
 
-			const msg =
-				args.join(" ")
-					.replace(Object.keys(event.mentions)[0] || "", "")
-					.trim() || "👋 ধামাকা থাপ্পড় 🤣";
+      fs.unlinkSync(filePath);
 
-			await message.reply({
-				body: msg,
-				attachment: fs.createReadStream(filePath)
-			});
-
-			fs.unlinkSync(filePath);
-
-		} catch (err) {
-			console.log(err);
-			message.reply("❌ Slap image আনতে সমস্যা হয়েছে");
-		}
-	}
+    } catch (err) {
+      console.log(err);
+      message.reply("❌ Slap GIF আনতে পারলাম না, আবার try কর");
+    }
+  }
 };
