@@ -5,7 +5,7 @@ const path = require("path");
 module.exports = {
     config: {
         name: "slap",
-        version: "1.7",
+        version: "1.8",
         author: "SaGor",
         countDown: 5,
         role: 0,
@@ -32,17 +32,18 @@ module.exports = {
         }
 
         try {
-            const avatar1 = await usersData.getAvatarUrl(senderID);
-            const avatar2 = await usersData.getAvatarUrl(targetID);
+            const avatar1 = await usersData.getAvatarUrl(senderID) || `https://graph.facebook.com/${senderID}/picture?type=large`;
+            const avatar2 = await usersData.getAvatarUrl(targetID) || `https://graph.facebook.com/${targetID}/picture?type=large`;
 
             // Generate slap image
-            const slapImage = await new DIG.Slap().getImage(avatar1, avatar2);
+            const slap = new DIG.Slap();
+            const slapImageBuffer = await slap.getImage(avatar1, avatar2); // buffer guaranteed
 
             // Save temp
             const tmpDir = path.join(__dirname, "tmp");
             if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
             const filePath = path.join(tmpDir, `${senderID}_${targetID}_slap.png`);
-            fs.writeFileSync(filePath, slapImage);
+            fs.writeFileSync(filePath, slapImageBuffer); // write buffer
 
             // Message content
             const content = args.join(" ").replace(Object.keys(event.mentions)[0] || "", "").trim() || "Bópppp 😵‍💫😵";
