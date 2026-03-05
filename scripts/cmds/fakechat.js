@@ -11,21 +11,20 @@ module.exports = {
   config: {
     name: "fakechat",
     aliases: ["fc", "F", "fake"],
-    version: "1.7",
+    version: "2.1",
     author: "MahMUD",
     role: 0,
     category: "fun",
-    description: "Generate fake chat via reply, mention, or user uid",
+    description: "Generate fake chat (VIP Only) with stylish Xineas BBZChat Bot",
     countDown: 5,
   },
 
-  onStart: async ({ event, message, args, usersData, api }) => {
-    const obfuscatedAuthor = String.fromCharCode(77, 97, 104, 77, 85, 68); // "MahMUD"
-    if (module.exports.config.author !== obfuscatedAuthor) {
-      return api.sendMessage(
-        "❌ | You are not authorized to change the author name.",
-        event.threadID,
-        event.messageID
+  onStart: async ({ event, message, args, usersData, api, config }) => {
+
+    // VIP CHECK
+    if (!config.vipUser || !config.vipUser[event.senderID] || config.vipUser[event.senderID] < Date.now()) {
+      return message.reply(
+        "❌❌ | Only 👑 VIP users can use this command!\n✨ Become VIP to unlock **Xineas BBZChat Bot** stylish fake chats!"
       );
     }
 
@@ -33,6 +32,7 @@ module.exports = {
       let targetId;
       let userText = args.join(" ").trim();
 
+      // DETERMINE TARGET USER
       if (event.messageReply) {
         targetId = event.messageReply.senderID || event.messageReply.sender?.id;
       } else if (event.mentions && Object.keys(event.mentions).length > 0) {
@@ -43,11 +43,12 @@ module.exports = {
         targetId = args[0];
         userText = args.slice(1).join(" ").trim();
       } else {
-        return message.reply("❌ Piw Piw Chat Bot Please reply, mention, or provide user uid.");
+        return message.reply("❌ Reply, mention, or provide user UID to generate fake chat.");
       }
 
-      if (!userText) return message.reply("❌ Piw Piw Chat Bot Please provide the text for the fake chat.");
+      if (!userText) return message.reply("❌ Please provide text for the fake chat.");
 
+      // GET USER NAME
       let userName = "Unknown";
       try {
         userName = (await usersData.getName(targetId)) || targetId;
@@ -55,6 +56,7 @@ module.exports = {
         userName = targetId;
       }
 
+      // CALL API
       const baseApi = await mahmhd();
       const apiUrl = `${baseApi}/api/fakechat?id=${targetId}&name=${encodeURIComponent(
         userName
@@ -64,16 +66,19 @@ module.exports = {
       const filePath = path.join(__dirname, `fakechat_${Date.now()}.png`);
       fs.writeFileSync(filePath, Buffer.from(response.data, "binary"));
 
+      // SEND STYLISH VIP MESSAGE
       await message.reply({
-        body: `Piw Piw Chat Bot 🗨️ Fake chat generated for: ${userName}`,
+        body: `✨👑 **Xineas BBZChat Bot** 👑✨\n\n🗨️ **Target:** ${userName}\n💬 **Message:** ${userText}\n\n💖 Thank you for using VIP features!`,
         attachment: fs.createReadStream(filePath),
       });
 
+      // DELETE TEMP FILE
       setTimeout(() => {
         try { fs.unlinkSync(filePath); } catch {}
       }, 5000);
+
     } catch {
-      await message.reply("🥹error, contact Gojo Orupe Piw Piw.");
+      await message.reply("🥹 Error occurred! Contact **Xineas BBZChat Bot Support**.");
     }
   },
 };
