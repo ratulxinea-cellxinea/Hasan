@@ -14,7 +14,7 @@ const mahmud = async () => {
 
     cachedBaseURL = data.mahmud;
     return cachedBaseURL;
-  } catch {
+  } catch (e) {
     throw new Error("API load failed");
   }
 };
@@ -22,8 +22,8 @@ const mahmud = async () => {
 module.exports = {
   config: {
     name: "edit",
-    version: "2.0",
-    author: "MahMUD",
+    version: "2.1",
+    author: "MahMUD + Fix",
     countDown: 5,
     role: 0,
     category: "image",
@@ -55,9 +55,9 @@ module.exports = {
       const baseURL = await mahmud();
 
       const res = await axios({
-        method: "POST",
+        method: "GET",
         url: `${baseURL}/api/edit`,
-        data: {
+        params: {
           prompt: prompt,
           imageUrl: replied.url
         },
@@ -75,13 +75,15 @@ module.exports = {
 
     } catch (e) {
 
+      console.log(e);
+
       api.setMessageReaction("❌", event.messageID, () => {}, true);
 
       message.reply("❌ | Server error, পরে আবার try কর");
     }
 
     setTimeout(() => {
-      fs.unlinkSync(imgPath);
+      if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
       api.unsendMessage(wait.messageID);
     }, 5000);
   }
