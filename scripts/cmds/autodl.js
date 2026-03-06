@@ -3,78 +3,99 @@ const fs = require("fs-extra");
 const path = require("path");
 
 module.exports = {
-config: {
-name: "autodl",
-version: "3.0",
-author: "Dipto + Edit Mehedi Hasan",
-countDown: 0,
-role: 0,
-shortDescription: "Auto Download Video",
-longDescription: "Download video automatically from link",
-category: "MEDIA"
-},
+  config: {
+    name: "autodl",
+    version: "4.0",
+    author: "Dipto + Edit Mehedi Hasan",
+    countDown: 0,
+    role: 0,
+    shortDescription: "Auto video downloader",
+    longDescription: "Auto download videos from social links",
+    category: "MEDIA"
+  },
 
-onStart: async function () {},
+  onStart: async function () {},
 
-onChat: async function ({ api, event }) {
+  onChat: async function ({ api, event }) {
 
-if (!event.body) return;
+    if (!event.body) return;
 
-const link = event.body.trim();
+    const link = event.body.trim();
 
-if (!link.match(/(tiktok|facebook|fb.watch|instagram|youtu|twitter|x.com)/i)) return;
+    if (!link.match(/(tiktok|facebook|fb.watch|instagram|youtu|twitter|x.com)/i)) return;
 
-try {
+    try {
 
-api.setMessageReaction("⏳", event.messageID, () => {}, true);
+      api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
-const apiUrl = `https://api.ryzendesu.vip/api/downloader/alldl?url=${encodeURIComponent(link)}`;
+      const apiUrl = `https://api.ryzendesu.vip/api/downloader/alldl?url=${encodeURIComponent(link)}`;
 
-const res = await axios.get(apiUrl);
+      const res = await axios.get(apiUrl);
 
-if (!res.data || !res.data.url) {
-return api.sendMessage("❌ | Video download failed!", event.threadID, event.messageID);
-}
+      const videoUrl =
+        res.data?.url ||
+        res.data?.result ||
+        res.data?.data?.url;
 
-const videoUrl = res.data.url;
+      if (!videoUrl) {
+        api.setMessageReaction("❌", event.messageID, () => {}, true);
+        return api.sendMessage(
+          "❌ | Video not found!",
+          event.threadID,
+          event.messageID
+        );
+      }
 
-const filePath = path.join(__dirname, "cache", `autodl_${Date.now()}.mp4`);
+      const cache = path.join(__dirname, "cache");
 
-const video = await axios({
-url: videoUrl,
-method: "GET",
-responseType: "arraybuffer"
-});
+      if (!fs.existsSync(cache)) {
+        fs.mkdirSync(cache);
+      }
 
-fs.writeFileSync(filePath, Buffer.from(video.data));
+      const filePath = path.join(cache, `autodl_${Date.now()}.mp4`);
 
-api.setMessageReaction("✅", event.messageID, () => {}, true);
+      const video = await axios({
+        url: videoUrl,
+        method: "GET",
+        responseType: "arraybuffer"
+      });
 
-api.sendMessage({
-body: `
-╭━〔 ⚡ AUTO DOWNLOAD ⚡ 〕━╮
+      fs.writeFileSync(filePath, Buffer.from(video.data));
+
+      api.setMessageReaction("✅", event.messageID, () => {}, true);
+
+      api.sendMessage(
+        {
+          body: `╭━━━〔 ⚡ AUTO VIDEO DOWNLOADER ⚡ 〕━━━╮
 ┃
-┃ 👑 ADMIN : Mehedi Hasan
-┃ 📥 Video Downloaded
+┃ 👑 ADMIN ➤ Mehedi Hasan
+┃ 🚀 STATUS ➤ Download Complete
+┃ 📥 SOURCE ➤ Social Media
 ┃
-┃ 🔗 Link Supported
+┃ 🎬 VIDEO READY
+┃ ⚡ FAST DOWNLOADED
 ┃
-╰━━━━━━━━━━━━━━━━━━╯
-`,
-attachment: fs.createReadStream(filePath)
-},
-event.threadID,
-() => fs.unlinkSync(filePath),
-event.messageID
-);
+╰━━━━━━━━━━━━━━━━━━━━━━━━╯`,
+          attachment: fs.createReadStream(filePath)
+        },
+        event.threadID,
+        () => fs.unlinkSync(filePath),
+        event.messageID
+      );
 
-} catch (e) {
+    } catch (err) {
 
-api.setMessageReaction("❌", event.messageID, () => {}, true);
+      console.log(err);
 
-api.sendMessage("❌ | Download error!", event.threadID, event.messageID);
+      api.setMessageReaction("❌", event.messageID, () => {}, true);
 
-}
+      api.sendMessage(
+        "❌ | Download failed. Try another link.",
+        event.threadID,
+        event.messageID
+      );
 
-}
+    }
+
+  }
 };
