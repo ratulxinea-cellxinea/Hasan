@@ -1,9 +1,10 @@
 const axios = require("axios");
-const fs = require("fs-extra");
+const fs = require("fs");
+const path = require("path");
 
 const baseApiUrl = async () => {
   const base = await axios.get(
-    `https://raw.githubusercontent.com/Mostakim0978/D1PT0/refs/heads/main/baseApiUrl.json`
+    "https://raw.githubusercontent.com/Mostakim0978/D1PT0/main/baseApiUrl.json"
   );
   return base.data.api;
 };
@@ -11,41 +12,44 @@ const baseApiUrl = async () => {
 module.exports = {
   config: {
     name: "alldl",
-    version: "1.1.0",
+    version: "2.0",
     author: "Dipto + Edit Mehedi Hasan",
     countDown: 2,
     role: 0,
-    description: {
-      en: "Download video from TikTok, Facebook, Instagram, YouTube and more"
+    shortDescription: {
+      en: "Download video from social media"
+    },
+    longDescription: {
+      en: "Download video from TikTok, Facebook, Instagram, YouTube"
     },
     category: "MEDIA",
     guide: {
-      en: "[video_link]"
+      en: "{pn} [video_link] or reply link"
     }
   },
 
-  onStart: async function ({ api, args, event }) {
-
-    const link = event.messageReply?.body || args[0];
-
-    if (!link) {
-      api.setMessageReaction("❌", event.messageID, () => {}, true);
-      return api.sendMessage(
-        "⚠️ | Please give a video link",
-        event.threadID,
-        event.messageID
-      );
-    }
-
+  onStart: async function ({ api, event, args }) {
     try {
+
+      const link = event.messageReply?.body || args[0];
+
+      if (!link) {
+        return api.sendMessage(
+          "⚠️ | Please give a video link",
+          event.threadID,
+          event.messageID
+        );
+      }
 
       api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
+      const apiUrl = await baseApiUrl();
+
       const { data } = await axios.get(
-        `${await baseApiUrl()}/alldl?url=${encodeURIComponent(link)}`
+        `${apiUrl}/alldl?url=${encodeURIComponent(link)}`
       );
 
-      if (!data.result) {
+      if (!data || !data.result) {
         api.setMessageReaction("❌", event.messageID, () => {}, true);
         return api.sendMessage(
           "❌ | Video not found!",
@@ -54,10 +58,13 @@ module.exports = {
         );
       }
 
-      const cache = __dirname + "/cache";
-      if (!fs.existsSync(cache)) fs.mkdirSync(cache);
+      const cachePath = path.join(__dirname, "cache");
 
-      const filePath = `${cache}/alldl_${Date.now()}.mp4`;
+      if (!fs.existsSync(cachePath)) {
+        fs.mkdirSync(cachePath);
+      }
+
+      const filePath = path.join(cachePath, `alldl_${Date.now()}.mp4`);
 
       const video = await axios.get(data.result, {
         responseType: "arraybuffer"
@@ -65,25 +72,21 @@ module.exports = {
 
       fs.writeFileSync(filePath, Buffer.from(video.data));
 
-      const short = await global.utils.shortenURL(data.result);
-
       api.setMessageReaction("✅", event.messageID, () => {}, true);
 
       api.sendMessage(
         {
-          body: `
-╭━━━〔 ⚡ ALL VIDEO DOWNLOADER ⚡ 〕━━━╮
+          body: `╭━━━〔 ⚡ ALL VIDEO DOWNLOADER ⚡ 〕━━━╮
 ┃
-┃ 👑 𝗔𝗗𝗠𝗜𝗡 ➤ Mehedi Hasan
+┃ 👑 ADMIN ➤ Mehedi Hasan
 ┃
-┃ 📥 𝗦𝗧𝗔𝗧𝗨𝗦 ➤ Download Complete
-┃ 🌐 𝗦𝗢𝗨𝗥𝗖𝗘 ➤ Social Media
+┃ 📥 STATUS ➤ Download Complete
+┃ 🌐 SOURCE ➤ Social Media
 ┃
-┃ 🔗 𝗩𝗜𝗗𝗘𝗢 𝗟𝗜𝗡𝗞
-┃ ${short}
+┃ 🔗 VIDEO LINK
+┃ ${data.result}
 ┃
-╰━━━━━━━━━━━━━━━━━━━━━━━━╯
-`,
+╰━━━━━━━━━━━━━━━━━━━━━━╯`,
           attachment: fs.createReadStream(filePath)
         },
         event.threadID,
@@ -91,31 +94,9 @@ module.exports = {
         event.messageID
       );
 
-      // imgur support
-      if (link.startsWith("https://i.imgur.com")) {
+    } catch (err) {
 
-        const ext = link.substring(link.lastIndexOf("."));
-
-        const response = await axios.get(link, {
-          responseType: "arraybuffer"
-        });
-
-        const filename = `${cache}/imgur${ext}`;
-
-        fs.writeFileSync(filename, Buffer.from(response.data));
-
-        api.sendMessage(
-          {
-            body: "🖼️ | Imgur file downloaded successfully",
-            attachment: fs.createReadStream(filename)
-          },
-          event.threadID,
-          () => fs.unlinkSync(filename),
-          event.messageID
-        );
-      }
-
-    } catch (error) {
+      console.log(err);
 
       api.setMessageReaction("❎", event.messageID, () => {}, true);
 
