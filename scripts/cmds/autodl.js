@@ -1,9 +1,11 @@
 const axios = require("axios");
 const fs = require("fs");
+const path = require("path");
 const { shortenURL } = global.utils;
+
 const baseApiUrl = async () => {
   const base = await axios.get(
-    `https://raw.githubusercontent.com/Blankid018/D1PT0/main/baseApiUrl.json`,
+    "https://raw.githubusercontent.com/Blankid018/D1PT0/main/baseApiUrl.json"
   );
   return base.data.api;
 };
@@ -11,66 +13,93 @@ const baseApiUrl = async () => {
 module.exports = {
   config: {
     name: "autodl",
-    version: "1.0.1",
-    author: "Dipto",
+    version: "2.0",
+    author: "Dipto + Edit Mehedi Hasan",
     countDown: 0,
     role: 0,
-    description: {
-      en: "Auto download video from tiktok, facebook, Instagram, YouTube, and more",
-    },
-    category: "media",
+    shortDescription: "Auto download video",
+    longDescription: "Auto download video from social media links",
+    category: "MEDIA",
     guide: {
-      en: "[video_link]",
-    },
+      en: "Just send video link"
+    }
   },
+
   onStart: async function () {},
+
   onChat: async function ({ api, event }) {
-    let dipto = event.body ? event.body : "";
+    const link = event.body ? event.body.trim() : "";
+
+    const check = [
+      "tiktok.com",
+      "vt.tiktok.com",
+      "vm.tiktok.com",
+      "facebook.com",
+      "fb.watch",
+      "instagram.com",
+      "youtu.be",
+      "youtube.com",
+      "twitter.com",
+      "x.com"
+    ];
+
+    if (!check.some(i => link.includes(i))) return;
 
     try {
-      if (
-        dipto.startsWith("https://vt.tiktok.com") ||
-        dipto.startsWith("https://www.tiktok.com/") ||
-        dipto.startsWith("https://www.facebook.com") ||
-        dipto.startsWith("https://www.instagram.com/") ||
-        dipto.startsWith("https://youtu.be/") ||
-        dipto.startsWith("https://youtube.com/") ||
-        dipto.startsWith("https://x.com/") ||
-        dipto.startsWith("https://twitter.com/") ||
-        dipto.startsWith("https://vm.tiktok.com") ||
-        dipto.startsWith("https://fb.watch")
-      ) {
-        api.setMessageReaction("⏳", event.messageID, (err) => {}, true);
+      api.setMessageReaction("⏳", event.messageID, () => {}, true);
 
-        const path = __dirname + `/cache/diptoo.mp4`;
-          if(!fs.existsSync(path)){
-        fs.mkdir(__dirname + '/cache');
+      const cachePath = path.join(__dirname, "cache");
+      const filePath = path.join(cachePath, `autodl_${Date.now()}.mp4`);
+
+      if (!fs.existsSync(cachePath)) {
+        fs.mkdirSync(cachePath, { recursive: true });
       }
-        const { data } = await axios.get(
-          `${await baseApiUrl()}/alldl?url=${encodeURIComponent(dipto)}`,
-        );
-        const vid = (
-          await axios.get(data.result, { responseType: "arraybuffer" })
-        ).data;
 
-        fs.writeFileSync(path, Buffer.from(vid, "utf-8"));
-        const url = await shortenURL(data.result);
-        api.setMessageReaction("✅", event.messageID, (err) => {}, true);
+      const { data } = await axios.get(
+        `${await baseApiUrl()}/alldl?url=${encodeURIComponent(link)}`
+      );
+
+      const video = await axios({
+        url: data.result,
+        method: "GET",
+        responseType: "stream"
+      });
+
+      const writer = fs.createWriteStream(filePath);
+      video.data.pipe(writer);
+
+      writer.on("finish", async () => {
+        const short = await shortenURL(data.result);
+
+        api.setMessageReaction("✅", event.messageID, () => {}, true);
 
         api.sendMessage(
           {
-            body: `${data.cp || null}\n✅ | Link: ${url || null}`,
-
-            attachment: fs.createReadStream(path),
+            body: `
+╭─〔 🌐 AUTO DOWNLOAD 〕─╮
+│
+│ 👑 Admin : Mehedi Hasan
+│ 📥 Video Downloaded Successfully
+│
+│ 🔗 Link : ${short}
+│
+╰────────────────╯
+`,
+            attachment: fs.createReadStream(filePath)
           },
           event.threadID,
-          () => fs.unlinkSync(path),
-          event.messageID,
+          () => fs.unlinkSync(filePath),
+          event.messageID
         );
-      }
-    } catch (e) {
-      api.setMessageReaction("❎", event.messageID, (err) => {}, true);
-      api.sendMessage(e, event.threadID, event.messageID);
+      });
+
+    } catch (err) {
+      api.setMessageReaction("❌", event.messageID, () => {}, true);
+      api.sendMessage(
+        "❌ | Video download failed!",
+        event.threadID,
+        event.messageID
+      );
     }
-  },
+  }
 };
