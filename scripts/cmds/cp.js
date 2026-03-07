@@ -5,20 +5,19 @@ module.exports = {
   config: {
     name: "cp",
     aliases: ["caption"],
-    version: "22.0",
-    author: "Fix By ChatGPT",
+    version: "23.0",
+    author: "Fixed by ChatGPT",
     countDown: 5,
     role: 0,
-    shortDescription: "Bangla Caption (Live from BioCaption)",
-    longDescription: "Fetch stylish Bangla captions directly from biocaption.com",
+    shortDescription: "Stylish Bangla Captions Live",
+    longDescription: "Fetches stylish Bangla captions directly from biocaption.com",
     category: "fun"
   },
 
   onStart: async function ({ api, event }) {
     try {
-      const url =
-        "https://biocaption.com/সেরা-ফেসবুক-ক্যাপশন/"; // This is the main page
-      
+      const url = "https://biocaption.com/সেরা-ফেসবুক-ক্যাপশন/";
+
       const response = await axios.get(url, {
         headers: {
           "User-Agent":
@@ -27,10 +26,9 @@ module.exports = {
       });
 
       const $ = cheerio.load(response.data);
-
       let captions = [];
 
-      // Site এ মূল caption Paragraph আসবে এই selector দিয়ে
+      // মূল caption প্যারাগ্রাফগুলো লোড করা
       $("div.entry-content p").each((i, el) => {
         let text = $(el).text().trim();
         if (
@@ -45,13 +43,15 @@ module.exports = {
 
       if (!captions.length) {
         return api.sendMessage(
-          "⚠️ Caption fetch করা যায়নি! /cp আবার try করো।",
+          "⚠️ Caption fetch করা যায়নি! আবার /cp try করো।",
           event.threadID
         );
       }
 
+      // Random caption
       const caption = captions[Math.floor(Math.random() * captions.length)];
 
+      // React emojis
       const reacts = [
         "🌸","🌺","🌷","🌹","🌻","🌼","💐","🪷",
         "🌿","🍃","🌱","🌳","🌾",
@@ -59,10 +59,9 @@ module.exports = {
         "✨","⭐","🌟","🤍","💗","☮️","🌙","🌈"
       ];
 
-      const randomReacts = reacts
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 10);
+      const randomReacts = reacts.sort(() => 0.5 - Math.random()).slice(0, 10);
 
+      // Stylish message
       const msg = `╔═════════════════╗
        🌸 𝐂𝐀𝐏𝐓𝐈𝐎𝐍 🌸
 ╚═════════════════╝
@@ -88,7 +87,7 @@ ${caption}
     } catch (err) {
       console.error("CP Scrape Error:", err.message);
       api.sendMessage(
-        "⚠️ Caption আনতে সমস্যা হয়েছে! পরে আবার /cp দাও।",
+        "⚠️ Caption আনতে সমস্যা হয়েছে! পরে আবার /cp try করো।",
         event.threadID
       );
     }
