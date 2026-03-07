@@ -1,31 +1,54 @@
+const axios = require("axios");
+const cheerio = require("cheerio");
+
 module.exports = {
   config: {
     name: "cp",
     aliases: ["caption"],
-    version: "21.0",
-    author: "Nazim Ultra Direct Fix",
+    version: "22.0",
+    author: "Fix By ChatGPT",
     countDown: 5,
     role: 0,
-    shortDescription: "Bangla Caption",
-    longDescription: "Fetch direct Bangla caption from internal list with react",
+    shortDescription: "Bangla Caption (Live from BioCaption)",
+    longDescription: "Fetch stylish Bangla captions directly from biocaption.com",
     category: "fun"
   },
 
   onStart: async function ({ api, event }) {
     try {
-      // সরাসরি internal captions
-      const captions = [
-        "সেরা বন্ধু হলো সেই, যা পাশে থাকে খারাপ সময়ে।",
-        "মুখে হাসি থাকলেও মন ভরা আবেগ।",
-        "জীবন সুন্দর, শুধু চোখ খোলার দরকার।",
-        "ভালোবাসা শুধুই অনুভব করা হয়, বোঝানো যায় না।",
-        "সপ্ন দেখা মানেই জীবনের রং ধরে রাখা।",
-        "নিজেকে ভালোবাসো, তাহলে পৃথিবীও ভালোবাসবে।",
-        "যেখানে আশা আছে, সেখানে জীবন আছে।",
-        "মাঝে মাঝে একা থাকা মানে শক্তিশালী হওয়া।",
-        "সত্যি বন্ধু কখনো তোমাকে ছেড়ে যায় না।",
-        "আজকের কষ্ট, আগামীকালের শক্তি।"
-      ];
+      const url =
+        "https://biocaption.com/সেরা-ফেসবুক-ক্যাপশন/"; // This is the main page
+      
+      const response = await axios.get(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0 Safari/537.36"
+        }
+      });
+
+      const $ = cheerio.load(response.data);
+
+      let captions = [];
+
+      // Site এ মূল caption Paragraph আসবে এই selector দিয়ে
+      $("div.entry-content p").each((i, el) => {
+        let text = $(el).text().trim();
+        if (
+          text &&
+          text.length > 20 &&
+          !text.includes("http") &&
+          !text.includes("Facebook")
+        ) {
+          captions.push(text);
+        }
+      });
+
+      if (!captions.length) {
+        return api.sendMessage(
+          "⚠️ Caption fetch করা যায়নি! /cp আবার try করো।",
+          event.threadID
+        );
+      }
 
       const caption = captions[Math.floor(Math.random() * captions.length)];
 
@@ -36,7 +59,9 @@ module.exports = {
         "✨","⭐","🌟","🤍","💗","☮️","🌙","🌈"
       ];
 
-      const randomReacts = reacts.sort(() => 0.5 - Math.random()).slice(0, 10);
+      const randomReacts = reacts
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 10);
 
       const msg = `╔═════════════════╗
        🌸 𝐂𝐀𝐏𝐓𝐈𝐎𝐍 🌸
@@ -48,7 +73,7 @@ ${caption}
 🕊️ Admin : Mehedi Hasan
 ╚══════════════════╝
 
-🌸 /cp 𝙩𝙮𝙥𝙚 𝙖𝙜𝙖𝙞𝙣`;
+🌸 /cp আবার try করো!`;
 
       api.sendMessage(msg, event.threadID, async (err, info) => {
         if (!err && info) {
@@ -61,8 +86,11 @@ ${caption}
       });
 
     } catch (err) {
-      console.log("CP Error:", err);
-      api.sendMessage("⚠️ Caption আনতে সমস্যা হয়েছে! পরে আবার /cp দাও", event.threadID);
+      console.error("CP Scrape Error:", err.message);
+      api.sendMessage(
+        "⚠️ Caption আনতে সমস্যা হয়েছে! পরে আবার /cp দাও।",
+        event.threadID
+      );
     }
   }
 };
