@@ -4,85 +4,80 @@ const cheerio = require("cheerio");
 module.exports = {
   config: {
     name: "cp",
-    aliases: [],
-    version: "5.0",
-    author: "Nazim",
+    aliases: ["caption"],
+    version: "7.0",
+    author: "Nazim + Ultra Fix",
     countDown: 5,
     role: 0,
-    shortDescription: "Stylish Bangla Caption + Random React",
-    longDescription: "Get stylish caption and auto-react with 50+ flower & peace emojis, change every time",
+    shortDescription: "Stylish Bangla Caption",
+    longDescription: "Get stylish bangla caption with flower & peace reactions",
     category: "fun"
   },
 
-  onStart: async function ({ api, event, message }) {
+  onStart: async function ({ api, event }) {
     try {
-      // Fetch captions
-      const res = await axios.get("https://banglacaptionstatus.com/stylish-best-caption-bangla/");
-      const $ = cheerio.load(res.data);
 
+      const url = "https://biocaption.com/%E0%A6%B8%E0%A7%87%E0%A6%B0%E0%A6%BE-%E0%A6%AB%E0%A7%87%E0%A6%B8%E0%A6%AC%E0%A7%81%E0%A6%95-%E0%A6%95%E0%A7%8D%E0%A6%AF%E0%A6%BE%E0%A6%AA%E0%A6%B6%E0%A6%A8/";
+      const res = await axios.get(url);
+
+      const $ = cheerio.load(res.data);
       let captions = [];
 
       $("p").each((i, el) => {
         const text = $(el).text().trim();
+
         if (
           text.length > 25 &&
-          text.length < 250 &&
+          text.length < 200 &&
           !text.includes("http") &&
-          !text.includes("Facebook") &&
-          !text.includes("WhatsApp")
+          !text.includes("Facebook")
         ) {
           captions.push(text);
         }
       });
 
       if (!captions.length) {
-        return api.sendMessage("🌸 Caption পাওয়া যায়নি! পরে চেষ্টা করো 🕊️", event.threadID);
+        return api.sendMessage("🌸 সুন্দর Caption পাওয়া যায়নি! পরে আবার চেষ্টা করো 🕊️", event.threadID);
       }
 
       const randomCaption =
         captions[Math.floor(Math.random() * captions.length)];
 
-      // 🌸 Full Flower & Peace Emoji List (50+)
       const emojis = [
         "🌸","🌺","🌷","🌹","🥀","🌻","🌼","💐","🪷","🌿",
-        "🍃","🌾","🌱","🌲","🌳","🕊️","✌️","☮️","🪶","✨",
-        "💮","🏵️","🪻","🌵","🌴","🌙","🌤️","🌈","🌊","🧘‍♂️",
-        "🧘‍♀️","💗","🤍","💞","💓","💝","🕯️","🪔","🫶","🤲",
-        "🌅","🌄","🍀","🌟","🌌","🌬️","🕊","☀️","🌺","🌸",
-        "🌷","🌹","💮","🏵️","🪷","🌻","🍃","🌿","🌼","☮️",
-        "🌸","🌺","🌷","🌹","🥀","🌻","🌼","💐","🪷","🌿",
-        "🍃","🌾","🌱","🌲","🌳","🕊️","✌️","☮️","🪶","✨"
+        "🍃","🌾","🌱","🌳","🕊️","☮️","✌️","✨","💮","🏵️",
+        "🪻","🌙","🌤️","🌈","🌊","💗","🤍","💞","💓","🌟"
       ];
 
-      // Random 30 emojis for reactions
-      const randomEmojis = emojis
+      const randomReacts = emojis
         .sort(() => 0.5 - Math.random())
-        .slice(0, 30);
+        .slice(0, 15);
 
-      // Stylish caption message
-      const sentMessage = await api.sendMessage(
-`╭━❀ 𝐒𝐓𝐘𝐋𝐈𝐒𝐇 𝐁𝐚𝐧𝐠𝐥𝐚 𝐂𝐚𝐩𝐭𝐢𝐨𝐧 ❀━╮
-│
-│  ${randomCaption}
-│
-╰━❀━━━━━━━━━━━━━━❀━╯
+      const msg = `╭━━━〔 🌸 𝐒𝐓𝐘𝐋𝐈𝐒𝐇 𝐂𝐀𝐏𝐓𝐈𝐎𝐍 🌸 〕━━━╮
 
-      ❀ 𝑴𝒆𝒉𝒆𝒅𝒊 𝑯𝒂𝒔𝒂𝒏 ❀`, 
-        event.threadID
-      );
+   ${randomCaption}
 
-      // Auto-react with all selected flower & peace emojis
-      for (const emoji of randomEmojis) {
+╰━━━〔 🕊️ 𝐁𝐈𝐎 𝐂𝐀𝐏𝐓𝐈𝐎𝐍 🕊️ 〕━━━╯
+
+🌸 𝐀𝐝𝐦𝐢𝐧 : 𝐌𝐞𝐡𝐞𝐝𝐢 𝐇𝐚𝐬𝐚𝐧  
+✦ /cp 𝙩𝙮𝙥𝙚 𝙖𝙜𝙖𝙞𝙣`;
+
+      const sent = await api.sendMessage(msg, event.threadID);
+
+      for (const emoji of randomReacts) {
         try {
-          await api.react(emoji, sentMessage.messageID);
-        } catch (e) {
-          console.log(`React failed for ${emoji}: ${e.message}`);
-        }
+          await api.setMessageReaction(
+            emoji,
+            sent.messageID,
+            () => {},
+            true
+          );
+        } catch {}
       }
 
     } catch (err) {
-      console.error(err);
-      return api.sendMessage("🕊️ Caption আনতে সমস্যা হচ্ছে! পরে আবার চেষ্টা করো 🌸", event.threadID);
+      console.log(err);
+      api.sendMessage("⚠️ Caption আনতে সমস্যা হয়েছে! আবার চেষ্টা করো /cp", event.threadID);
     }
   }
 };
