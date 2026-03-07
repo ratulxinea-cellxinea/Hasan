@@ -1,42 +1,32 @@
-const axios = require("axios");
-const cheerio = require("cheerio");
+const fs = require("fs");
+const path = require("path");
 
 module.exports = {
   config: {
     name: "cp",
     aliases: ["caption"],
-    version: "19.0",
+    version: "20.0",
     author: "Nazim Ultra Direct Fix",
     countDown: 5,
     role: 0,
     shortDescription: "Bangla Caption",
-    longDescription: "Fetch direct Bangla caption from site with react",
+    longDescription: "Fetch direct Bangla caption from cache with react",
     category: "fun"
   },
 
   onStart: async function ({ api, event }) {
     try {
-      // User-Agent দিয়ে fetch
-      const url = "https://biocaption.com/সেরা-ফেসবুক-ক্যাপশন/";
-      const res = await axios.get(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0 Safari/537.36"
-        }
-      });
+      // captions.json ফাইল থেকে fetch
+      const filePath = path.join(__dirname, "captions.json");
+      if (!fs.existsSync(filePath)) {
+        return api.sendMessage("⚠️ Caption file পাওয়া যায়নি! পরে চেষ্টা করো /cp", event.threadID);
+      }
 
-      const $ = cheerio.load(res.data);
-
-      let captions = [];
-      // শুধুমাত্র site এর মূল content থেকে paragraph নাও
-      $("div.entry-content p").each((i, el) => {
-        const text = $(el).text().trim();
-        if (text.length > 25 && text.length < 200 && !text.includes("http") && !text.includes("Facebook")) {
-          captions.push(text);
-        }
-      });
+      const data = fs.readFileSync(filePath, "utf-8");
+      const captions = JSON.parse(data);
 
       if (!captions.length) {
-        return api.sendMessage("⚠️ Caption fetch করা যায়নি! পরে চেষ্টা করো /cp", event.threadID);
+        return api.sendMessage("⚠️ Caption load করা যায়নি! পরে চেষ্টা করো /cp", event.threadID);
       }
 
       const caption = captions[Math.floor(Math.random() * captions.length)];
