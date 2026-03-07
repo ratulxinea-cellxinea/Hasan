@@ -5,12 +5,12 @@ module.exports = {
   config: {
     name: "cp",
     aliases: ["caption"],
-    version: "7.0",
-    author: "Nazim + Ultra Fix",
+    version: "13.0",
+    author: "Nazim Ultra Legend",
     countDown: 5,
     role: 0,
-    shortDescription: "Stylish Bangla Caption",
-    longDescription: "Get stylish bangla caption with flower & peace reactions",
+    shortDescription: "Bangla Caption",
+    longDescription: "Ultra stylish bangla caption with flower & bird reactions",
     category: "fun"
   },
 
@@ -37,47 +37,47 @@ module.exports = {
       });
 
       if (!captions.length) {
-        return api.sendMessage("🌸 সুন্দর Caption পাওয়া যায়নি! পরে আবার চেষ্টা করো 🕊️", event.threadID);
+        return api.sendMessage("🌸 Caption পাওয়া যায়নি! পরে আবার /cp দাও", event.threadID);
       }
 
-      const randomCaption =
-        captions[Math.floor(Math.random() * captions.length)];
+      const randomCaption = captions[Math.floor(Math.random() * captions.length)];
 
-      const emojis = [
-        "🌸","🌺","🌷","🌹","🥀","🌻","🌼","💐","🪷","🌿",
-        "🍃","🌾","🌱","🌳","🕊️","☮️","✌️","✨","💮","🏵️",
-        "🪻","🌙","🌤️","🌈","🌊","💗","🤍","💞","💓","🌟"
+      const reacts = [
+        "🌸","🌺","🌷","🌹","🌻","🌼","💐","🪷",
+        "🌿","🍃","🌱","🌳","🌾",
+        "🕊️","🐦","🐤","🐥","🦜","🦢",
+        "✨","⭐","🌟","💗","🤍","☮️","🌙","🌈"
       ];
 
-      const randomReacts = emojis
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 15);
+      const msg = `╔═══════════════╗
+      🌸 𝐂𝐀𝐏𝐓𝐈𝐎𝐍 🌸
+╚═══════════════╝
 
-      const msg = `╭━━━〔 🌸 𝐒𝐓𝐘𝐋𝐈𝐒𝐇 𝐂𝐀𝐏𝐓𝐈𝐎𝐍 🌸 〕━━━╮
+${randomCaption}
 
-   ${randomCaption}
+╔════════════════╗
+🕊️ 𝐀𝐝𝐦𝐢𝐧 : 𝐌𝐞𝐡𝐞𝐝𝐢 𝐇𝐚𝐬𝐚𝐧
+╚════════════════╝
 
-╰━━━〔 🕊️ 𝐁𝐈𝐎 𝐂𝐀𝐏𝐓𝐈𝐎𝐍 🕊️ 〕━━━╯
+🌸 /cp 𝙩𝙮𝙥𝙚 𝙖𝙜𝙖𝙞𝙣`;
 
-🌸 𝐀𝐝𝐦𝐢𝐧 : 𝐌𝐞𝐡𝐞𝐝𝐢 𝐇𝐚𝐬𝐚𝐧  
-✦ /cp 𝙩𝙮𝙥𝙚 𝙖𝙜𝙖𝙞𝙣`;
+      api.sendMessage(msg, event.threadID, async (err, info) => {
+        if (!err) {
 
-      const sent = await api.sendMessage(msg, event.threadID);
+          const shuffled = reacts.sort(() => 0.5 - Math.random()).slice(0, 10);
 
-      for (const emoji of randomReacts) {
-        try {
-          await api.setMessageReaction(
-            emoji,
-            sent.messageID,
-            () => {},
-            true
-          );
-        } catch {}
-      }
+          for (const r of shuffled) {
+            try {
+              await api.setMessageReaction(r, info.messageID, () => {}, true);
+            } catch {}
+          }
+
+        }
+      });
 
     } catch (err) {
       console.log(err);
-      api.sendMessage("⚠️ Caption আনতে সমস্যা হয়েছে! আবার চেষ্টা করো /cp", event.threadID);
+      api.sendMessage("⚠️ Caption আনতে সমস্যা হয়েছে! আবার /cp দাও", event.threadID);
     }
   }
 };
