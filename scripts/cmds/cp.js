@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "cp",
     aliases: ["caption"],
-    version: "29.0",
+    version: "30.0",
     author: "Fixed by ChatGPT",
     countDown: 5,
     role: 0,
@@ -39,7 +39,10 @@ module.exports = {
 
       // যদি কোনো caption না পাওয়া যায়, fallback
       if (captions.length === 0) {
-        return api.sendMessage("🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸", event.threadID);
+        return api.sendMessage(
+          "🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸",
+          event.threadID
+        );
       }
 
       // Randomly pick 1 caption
@@ -52,9 +55,9 @@ module.exports = {
         "🕊️","🐦","🐤","🐥","🦜","🦢",
         "✨","⭐","🌟","🤍","💗","☮️","🌙","🌈"
       ];
-      const randomReacts = reacts.sort(() => 0.5 - Math.random()).slice(0, 10);
+      const randomReacts = reacts.sort(() => 0.5 - Math.random()).slice(0, 8);
 
-      // Stylish message
+      // Stylish message same আগের মতো
       const msg = `╔═════════════════╗
        🌸 𝐂𝐀𝐏𝐓𝐈𝐎𝐍 🌸
 ╚═════════════════╝
@@ -71,16 +74,17 @@ ${caption}
       api.sendMessage(msg, event.threadID, async (err, info) => {
         if (!err && info) {
           for (const r of randomReacts) {
-            try {
-              await api.setMessageReaction(r, info.messageID, () => {}, true);
-            } catch {}
+            try { await api.setMessageReaction(r, info.messageID, () => {}, true); } catch {}
           }
         }
       });
 
     } catch (err) {
       console.error("CP Scrape Error:", err.message);
-      api.sendMessage("🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸", event.threadID);
+      api.sendMessage(
+        "🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸",
+        event.threadID
+      );
     }
   }
 };
