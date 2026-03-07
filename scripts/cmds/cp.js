@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "cp",
     aliases: ["caption"],
-    version: "23.0",
+    version: "24.0",
     author: "Fixed by ChatGPT",
     countDown: 5,
     role: 0,
@@ -22,36 +22,29 @@ module.exports = {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0 Safari/537.36"
-        }
+        },
+        timeout: 10000
       });
 
       const $ = cheerio.load(response.data);
       let captions = [];
 
-      // মূল caption প্যারাগ্রাফগুলো লোড করা
+      // সমস্ত paragraphs থেকে caption filter
       $("div.entry-content p").each((i, el) => {
-        let text = $(el).text().trim();
-        if (
-          text &&
-          text.length > 20 &&
-          !text.includes("http") &&
-          !text.includes("Facebook")
-        ) {
+        const text = $(el).text().trim();
+        if (text && text.length > 20 && !text.includes("http") && !text.includes("Facebook")) {
           captions.push(text);
         }
       });
 
+      // যদি captions পাওয়া না যায়
       if (!captions.length) {
-        return api.sendMessage(
-          "⚠️ Caption fetch করা যায়নি! আবার /cp try করো।",
-          event.threadID
-        );
+        captions.push("🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸");
       }
 
-      // Random caption
       const caption = captions[Math.floor(Math.random() * captions.length)];
 
-      // React emojis
+      // Random React emojis
       const reacts = [
         "🌸","🌺","🌷","🌹","🌻","🌼","💐","🪷",
         "🌿","🍃","🌱","🌳","🌾",
@@ -86,10 +79,9 @@ ${caption}
 
     } catch (err) {
       console.error("CP Scrape Error:", err.message);
-      api.sendMessage(
-        "⚠️ Caption আনতে সমস্যা হয়েছে! পরে আবার /cp try করো।",
-        event.threadID
-      );
+      // এখানে আর কোনো ত্রুটি দেখানো হবে না, default caption পাঠাবে
+      const fallback = "🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸";
+      api.sendMessage(fallback, event.threadID);
     }
   }
 };
