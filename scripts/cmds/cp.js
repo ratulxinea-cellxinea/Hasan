@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "cp",
     aliases: ["caption"],
-    version: "28.2",
+    version: "29.0",
     author: "Fixed by ChatGPT",
     countDown: 5,
     role: 0,
@@ -29,7 +29,7 @@ module.exports = {
       const $ = cheerio.load(response.data);
       let captions = [];
 
-      // আগের মতো entry-content থেকে grab করা
+      // Live captions grab
       $("div.entry-content").find("p, li, span").each((i, el) => {
         const text = $(el).text().trim();
         if (text && text.length > 20 && !text.includes("http") && !text.includes("Facebook")) {
@@ -37,13 +37,15 @@ module.exports = {
         }
       });
 
-      // যদি captions না পাওয়া যায় fallback
-      const caption =
-        captions.length > 0
-          ? captions[Math.floor(Math.random() * captions.length)]
-          : "🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸";
+      // যদি কোনো caption না পাওয়া যায়, fallback
+      if (captions.length === 0) {
+        return api.sendMessage("🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸", event.threadID);
+      }
 
-      // Random reacts
+      // Randomly pick 1 caption
+      const caption = captions[Math.floor(Math.random() * captions.length)];
+
+      // Random emojis
       const reacts = [
         "🌸","🌺","🌷","🌹","🌻","🌼","💐","🪷",
         "🌿","🍃","🌱","🌳","🌾",
@@ -52,7 +54,7 @@ module.exports = {
       ];
       const randomReacts = reacts.sort(() => 0.5 - Math.random()).slice(0, 10);
 
-      // Stylish message same আগের মতো
+      // Stylish message
       const msg = `╔═════════════════╗
        🌸 𝐂𝐀𝐏𝐓𝐈𝐎𝐍 🌸
 ╚═════════════════╝
@@ -65,6 +67,7 @@ ${caption}
 
 🌸 /cp আবার try করো!`;
 
+      // Send message with reactions
       api.sendMessage(msg, event.threadID, async (err, info) => {
         if (!err && info) {
           for (const r of randomReacts) {
@@ -77,9 +80,7 @@ ${caption}
 
     } catch (err) {
       console.error("CP Scrape Error:", err.message);
-      // আগের মতো fallback
-      const fallback = "🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸";
-      api.sendMessage(fallback, event.threadID);
+      api.sendMessage("🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸", event.threadID);
     }
   }
 };
