@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "cp",
     aliases: ["caption"],
-    version: "27.0",
+    version: "28.0",
     author: "Fixed by ChatGPT",
     countDown: 5,
     role: 0,
@@ -32,16 +32,20 @@ module.exports = {
       // শুধুমাত্র live captions grab করা
       $("div.entry-content").find("p, li, span").each((i, el) => {
         const text = $(el).text().trim();
+        // Validate: বড় text & http/facebook remove
         if (text && text.length > 20 && !text.includes("http") && !text.includes("Facebook")) {
           captions.push(text);
         }
       });
 
-      // Live caption না থাকলে fallback
-      const caption =
-        captions.length > 0
-          ? captions[Math.floor(Math.random() * captions.length)]
-          : "🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸";
+      // যদি live captions পাওয়া যায়, random choose
+      let caption;
+      if (captions.length > 0) {
+        caption = captions[Math.floor(Math.random() * captions.length)];
+      } else {
+        // fallback
+        caption = "🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸";
+      }
 
       // Random React emojis
       const reacts = [
@@ -50,7 +54,7 @@ module.exports = {
         "🕊️","🐦","🐤","🐥","🦜","🦢",
         "✨","⭐","🌟","🤍","💗","☮️","🌙","🌈"
       ];
-      const randomReacts = reacts.sort(() => 0.5 - Math.random()).slice(0, 10);
+      const randomReacts = reacts.sort(() => 0.5 - Math.random()).slice(0, 8);
 
       // Stylish message
       const msg = `╔═════════════════╗
@@ -65,6 +69,7 @@ ${caption}
 
 🌸 /cp আবার try করো!`;
 
+      // Send message and add reactions
       api.sendMessage(msg, event.threadID, async (err, info) => {
         if (!err && info) {
           for (const r of randomReacts) {
@@ -77,7 +82,6 @@ ${caption}
 
     } catch (err) {
       console.error("CP Scrape Error:", err.message);
-      // fallback single caption
       const fallback = "🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸";
       api.sendMessage(fallback, event.threadID);
     }
