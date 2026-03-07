@@ -5,7 +5,7 @@ module.exports = {
   config: {
     name: "cp",
     aliases: ["caption"],
-    version: "17.0",
+    version: "18.0",
     author: "Nazim Ultra Direct Fix",
     countDown: 5,
     role: 0,
@@ -42,6 +42,7 @@ module.exports = {
         "✨","⭐","🌟","🤍","💗","☮️","🌙","🌈"
       ];
 
+      // 10টি র্যান্ডম রিয়্যাকশন নাও
       const randomReacts = reacts.sort(() => 0.5 - Math.random()).slice(0, 10);
 
       const msg = `╔═════════════════╗
@@ -56,18 +57,21 @@ ${caption}
 
 🌸 /cp 𝙩𝙮𝙥𝙚 𝙖𝙜𝙖𝙞𝙣`;
 
+      // মেসেজ পাঠাও এবং রিয়্যাকশন বসাও
       api.sendMessage(msg, event.threadID, async (err, info) => {
-        if (!err) {
+        if (!err && info) {
           for (const r of randomReacts) {
             try {
               await api.setMessageReaction(r, info.messageID, () => {}, true);
-            } catch {}
+            } catch (e) {
+              console.log("Reaction error:", e);
+            }
           }
         }
       });
 
     } catch (err) {
-      console.log(err);
+      console.log("CP Error:", err);
       api.sendMessage("⚠️ Caption আনতে সমস্যা হয়েছে! পরে আবার /cp দাও", event.threadID);
     }
   }
