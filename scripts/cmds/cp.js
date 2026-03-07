@@ -5,12 +5,12 @@ module.exports = {
   config: {
     name: "cp",
     aliases: ["caption"],
-    version: "24.0",
+    version: "27.0",
     author: "Fixed by ChatGPT",
     countDown: 5,
     role: 0,
-    shortDescription: "Stylish Bangla Captions Live",
-    longDescription: "Fetches stylish Bangla captions directly from biocaption.com",
+    shortDescription: "Live Stylish Bangla Caption",
+    longDescription: "Fetches 1 stylish Bangla caption directly from biocaption.com",
     category: "fun"
   },
 
@@ -23,26 +23,25 @@ module.exports = {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0 Safari/537.36"
         },
-        timeout: 10000
+        timeout: 15000
       });
 
       const $ = cheerio.load(response.data);
       let captions = [];
 
-      // সমস্ত paragraphs থেকে caption filter
-      $("div.entry-content p").each((i, el) => {
+      // শুধুমাত্র live captions grab করা
+      $("div.entry-content").find("p, li, span").each((i, el) => {
         const text = $(el).text().trim();
         if (text && text.length > 20 && !text.includes("http") && !text.includes("Facebook")) {
           captions.push(text);
         }
       });
 
-      // যদি captions পাওয়া না যায়
-      if (!captions.length) {
-        captions.push("🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸");
-      }
-
-      const caption = captions[Math.floor(Math.random() * captions.length)];
+      // Live caption না থাকলে fallback
+      const caption =
+        captions.length > 0
+          ? captions[Math.floor(Math.random() * captions.length)]
+          : "🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸";
 
       // Random React emojis
       const reacts = [
@@ -51,7 +50,6 @@ module.exports = {
         "🕊️","🐦","🐤","🐥","🦜","🦢",
         "✨","⭐","🌟","🤍","💗","☮️","🌙","🌈"
       ];
-
       const randomReacts = reacts.sort(() => 0.5 - Math.random()).slice(0, 10);
 
       // Stylish message
@@ -79,7 +77,7 @@ ${caption}
 
     } catch (err) {
       console.error("CP Scrape Error:", err.message);
-      // এখানে আর কোনো ত্রুটি দেখানো হবে না, default caption পাঠাবে
+      // fallback single caption
       const fallback = "🌸 আজকের স্টাইলিশ ক্যাপশন আনতে পারিনি, পরে আবার চেষ্টা করো 🌸";
       api.sendMessage(fallback, event.threadID);
     }
